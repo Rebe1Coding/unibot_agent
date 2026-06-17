@@ -1,0 +1,14 @@
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.*
+!.env.example
+tests
+frontend/node_modules
+frontend/dist
+frontend/.vite
+static/*
+!static/.gitkeep

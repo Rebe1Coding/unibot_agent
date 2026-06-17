@@ -1,0 +1,64 @@
+[project]
+name = "university-agent"
+version = "0.1.0"
+description = "RAG+ReAct AI agent for university student assistance"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "langchain>=0.3.0,<1.0",
+    "langchain-openai>=0.3.0,<1.0",
+    "langchain-community>=0.3.0,<1.0",
+    "langchain-huggingface>=0.1.0,<1.0",
+    "langchain-mcp-adapters>=0.1.0,<0.2.0",
+    "langgraph>=0.2.0,<1.0",
+    "tiktoken>=0.8.0",
+    "qdrant-client>=1.12.0",
+    "redis>=5.2.0",
+    "asyncpg>=0.30.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "minio>=7.2.0",
+    "python-multipart>=0.0.18",
+    "pydantic-settings>=2.6.0",
+    "sentence-transformers>=3.3.0",
+    "torch>=2.5.0,<3.0",
+    "fastembed>=0.4.0",
+    "celery[redis]>=5.4.0",
+    "unibot-shared",
+    "httpx>=0.28.0",
+    "python-dotenv>=1.0.0",
+    "prometheus-client>=0.21.0",
+    "python-json-logger>=2.0.0",
+    "tenacity>=8.0.0",
+    "markdown-it-py>=3.0.0",
+    "pyyaml>=6.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+unibot-shared = { path = "../shared" }
+torch = [{ index = "pytorch-cpu" }]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-mock>=3.14",
+    "httpx>=0.28",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

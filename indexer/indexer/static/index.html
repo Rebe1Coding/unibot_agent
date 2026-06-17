@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniBot — Управление базой знаний</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #6C63FF;
+  --accent-hover: #5a52e0;
+  --bg: #f5f6fa;
+  --card-bg: #fff;
+  --text: #2d3436;
+  --text-secondary: #636e72;
+  --border: #dfe6e9;
+  --success: #00b894;
+  --danger: #d63031;
+  --danger-hover: #c0392b;
+  --warning: #fdcb6e;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-width: 1024px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 32px;
+}
+
+/* ── Header ───────────────────────────── */
+
+header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 32px;
+  min-width: 220px;
+  text-align: center;
+}
+
+.stat-card .label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-card .value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-card .status {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.stat-card .status.error { color: var(--danger); }
+
+/* ── Tabs ─────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--border);
+}
+
+.tab-btn {
+  padding: 12px 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-btn:hover { color: var(--accent); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Cards / Sections ─────────────────── */
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+/* ── Notifications ────────────────────── */
+
+.notification {
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.notification.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.notification.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Drop Zone ────────────────────────── */
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dropzone.hover {
+  border-color: var(--accent);
+  background: rgba(108,99,255,0.04);
+}
+
+.dropzone p { color: var(--text-secondary); margin-bottom: 4px; }
+.dropzone .hint { font-size: 0.8rem; color: #b2bec3; }
+
+/* ── File List ────────────────────────── */
+
+.file-list {
+  margin-top: 16px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.file-item .name { flex: 1; font-weight: 500; }
+.file-item .size { color: var(--text-secondary); margin: 0 16px; font-size: 0.8rem; }
+
+.file-item .remove {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* ── Buttons ──────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+}
+.btn-outline:hover:not(:disabled) { background: rgba(108,99,255,0.06); }
+
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+/* ── Progress ─────────────────────────── */
+
+.progress-area {
+  margin-top: 16px;
+  display: none;
+}
+
+.progress-area.active { display: block; }
+
+.progress-bar-container {
+  background: var(--border);
+  border-radius: 20px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 20px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ── Sample Cards ─────────────────────── */
+
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.sample-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.85rem;
+}
+
+.sample-card .badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(108,99,255,0.12);
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.sample-card .meta {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  margin-bottom: 4px;
+}
+
+.sample-card .preview {
+  color: var(--text);
+  word-break: break-word;
+}
+
+/* ── Literature Table ─────────────────── */
+
+.lit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lit-table th {
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.lit-table td {
+  padding: 6px 8px;
+}
+
+.lit-table input, .lit-table select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.lit-table input:focus, .lit-table select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.lit-table .row-remove {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.lit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.json-area {
+  margin-top: 20px;
+}
+
+.json-area textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.json-area textarea:focus { outline: none; border-color: var(--accent); }
+
+.json-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* ── Collection Section ───────────────── */
+
+.collection-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Spinner ──────────────────────────── */
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>UniBot — Управление базой знаний</h1>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">База знаний</div>
+        <div class="value" id="stat-kb">—</div>
+        <div class="status" id="stat-kb-status">загрузка...</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Литература</div>
+        <div class="value" id="stat-lit">—</div>
+        <div class="status" id="stat-lit-status">загрузка...</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="knowledge">База знаний</button>
+    <button class="tab-btn" data-tab="literature">Литература</button>
+  </div>
+
+  <!-- ═══ TAB: Knowledge Base ═══ -->
+  <div id="tab-knowledge" class="tab-content active">
+    <div id="notif-kb"></div>
+
+    <div class="card">
+      <h3>Загрузка документов</h3>
+
+      <div class="dropzone" id="dropzone">
+        <p>Перетащите файлы сюда или нажмите для выбора</p>
+        <div class="hint">Поддерживаемые форматы: PDF, HTML, TXT, MD</div>
+        <input type="file" id="file-input" multiple accept=".html,.htm,.pdf,.md,.txt" hidden>
+      </div>
+
+      <div class="file-list" id="file-list"></div>
+
+      <div style="margin-top:12px; display:none;" id="upload-actions">
+        <button class="btn btn-primary" id="btn-upload-kb">Загрузить и индексировать</button>
+      </div>
+
+      <div class="progress-area" id="progress-area">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Подготовка...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Содержимое коллекции</h3>
+      <div class="collection-section">
+        <button class="btn btn-outline btn-sm" id="btn-sample-kb">Показать примеры</button>
+        <button class="btn btn-danger btn-sm" id="btn-clear-kb">Очистить коллекцию</button>
+      </div>
+      <div id="sample-kb"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Literature ═══ -->
+  <div id="tab-literature" class="tab-content">
+    <div id="notif-lit"></div>
+
+    <div class="card">
+      <h3>Добавление книг</h3>
+
+      <table class="lit-table" id="lit-table">
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Автор</th>
+            <th style="width:80px">Курс</th>
+            <th>Предмет</th>
+            <th>Ключ файла в MinIO</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="lit-tbody"></tbody>
+      </table>
+
+      <div class="lit-actions">
+        <button class="btn btn-outline btn-sm" id="btn-add-row">+ Добавить строку</button>
+        <button class="btn btn-primary btn-sm" id="btn-index-lit">Индексировать</button>
+      </div>
+
+      <div class="json-area">
+        <h3 style="margin-bottom:8px;">или вставьте JSON</h3>
+        <textarea id="json-input" placeholder='[{"title": "...", "author": "...", "course": 1, "subject": "...", "file_key": "..."}]'></textarea>
+        <div class="json-actions">
+          <button class="btn btn-primary btn-sm" id="btn-json-lit">Загрузить JSON</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Содержимое коллекции</h3>
+      <div class="collection-section">
+        <button class="btn btn-outline btn-sm" id="btn-sample-lit">Показать примеры</button>
+        <button class="btn btn-danger btn-sm" id="btn-clear-lit">Очистить коллекцию</button>
+      </div>
+      <div id="sample-lit"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── State ────────────────────────────────
+  let selectedFiles = [];
+
+  // ── API ──────────────────────────────────
+  const API = {
+    async getStats() {
+      const r = await fetch('/api/stats');
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    },
+
+    uploadKnowledge(files) {
+      const fd = new FormData();
+      files.forEach(f => fd.append('files', f));
+      return fetch('/api/upload/knowledge', { method: 'POST', body: fd });
+    },
+
+    async uploadLiterature(books) {
+      const r = await fetch('/api/upload/literature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ books }),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || r.statusText);
+      }
+      return r.json();
+    },
+
+    async clearCollection(name) {
+      const r = await fetch(`/api/collection/${name}`, { method: 'DELETE' });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || r.statusText);
+      }
+      return r.json();
+    },
+
+    async getSample(name) {
+      const r = await fetch(`/api/collection/${name}/sample`);
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || r.statusText);
+      }
+      return r.json();
+    },
+  };
+
+  // ── Helpers ──────────────────────────────
+
+  function $(id) { return document.getElementById(id); }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' Б';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
+  }
+
+  function showNotif(containerId, msg, type) {
+    const c = $(containerId);
+    const el = document.createElement('div');
+    el.className = `notification ${type}`;
+    el.textContent = msg;
+    c.prepend(el);
+    if (type === 'success') {
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+
+  function clearNotif(containerId) {
+    $(containerId).innerHTML = '';
+  }
+
+  // ── Stats ────────────────────────────────
+
+  async function loadStats() {
+    try {
+      const data = await API.getStats();
+      if (data.error) {
+        $('stat-kb').textContent = '—';
+        $('stat-kb-status').textContent = 'ошибка';
+        $('stat-kb-status').className = 'status error';
+        $('stat-lit').textContent = '—';
+        $('stat-lit-status').textContent = 'ошибка';
+        $('stat-lit-status').className = 'status error';
+        return;
+      }
+      const kb = data.knowledge_base || {};
+      const lit = data.literature || {};
+      $('stat-kb').textContent = kb.status === 'ok' ? kb.points_count : '—';
+      $('stat-kb-status').textContent = kb.status === 'ok' ? 'записей' : 'не создана';
+      $('stat-kb-status').className = kb.status === 'ok' ? 'status' : 'status error';
+      $('stat-lit').textContent = lit.status === 'ok' ? lit.points_count : '—';
+      $('stat-lit-status').textContent = lit.status === 'ok' ? 'записей' : 'не создана';
+      $('stat-lit-status').className = lit.status === 'ok' ? 'status' : 'status error';
+    } catch (e) {
+      $('stat-kb').textContent = '—';
+      $('stat-kb-status').textContent = 'Qdrant недоступен';
+      $('stat-kb-status').className = 'status error';
+      $('stat-lit').textContent = '—';
+      $('stat-lit-status').textContent = 'Qdrant недоступен';
+      $('stat-lit-status').className = 'status error';
+    }
+  }
+
+  loadStats();
+  setInterval(loadStats, 30000);
+
+  // ── Tabs ─────────────────────────────────
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      $('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Drag & Drop ──────────────────────────
+
+  const dropzone = $('dropzone');
+  const fileInput = $('file-input');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('hover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('hover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('hover');
+    addFiles(Array.from(e.dataTransfer.files));
+  });
+
+  fileInput.addEventListener('change', () => {
+    addFiles(Array.from(fileInput.files));
+    fileInput.value = '';
+  });
+
+  function addFiles(files) {
+    const allowed = ['.html', '.htm', '.pdf', '.md', '.txt'];
+    files.forEach(f => {
+      const ext = '.' + f.name.split('.').pop().toLowerCase();
+      if (allowed.includes(ext) && !selectedFiles.find(s => s.name === f.name && s.size === f.size)) {
+        selectedFiles.push(f);
+      }
+    });
+    renderFileList();
+  }
+
+  function renderFileList() {
+    const list = $('file-list');
+    list.innerHTML = '';
+    selectedFiles.forEach((f, i) => {
+      const el = document.createElement('div');
+      el.className = 'file-item';
+      el.innerHTML = `
+        <span class="name">${f.name}</span>
+        <span class="size">${formatSize(f.size)}</span>
+        <button class="remove" data-idx="${i}">&times;</button>
+      `;
+      list.appendChild(el);
+    });
+    $('upload-actions').style.display = selectedFiles.length ? 'block' : 'none';
+
+    list.querySelectorAll('.remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedFiles.splice(parseInt(btn.dataset.idx), 1);
+        renderFileList();
+      });
+    });
+  }
+
+  // ── Upload Knowledge (SSE) ───────────────
+
+  $('btn-upload-kb').addEventListener('click', async () => {
+    if (!selectedFiles.length) return;
+    clearNotif('notif-kb');
+
+    const btn = $('btn-upload-kb');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Загрузка...';
+
+    const pa = $('progress-area');
+    const pb = $('progress-bar');
+    const pt = $('progress-text');
+    pa.classList.add('active');
+    pb.style.width = '0%';
+    pt.textContent = 'Подготовка...';
+
+    try {
+      const response = await API.uploadKnowledge(selectedFiles);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let eventType = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            handleSSE(eventType, data, pb, pt);
+          }
+        }
+      }
+    } catch (e) {
+      showNotif('notif-kb', 'Ошибка подключения: ' + e.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Загрузить и индексировать';
+    setTimeout(() => { pa.classList.remove('active'); }, 2000);
+  });
+
+  function handleSSE(event, data, pb, pt) {
+    if (event === 'progress') {
+      const s = data.stage;
+      if (s === 'parsing') {
+        const pct = (data.current / data.total) * 25;
+        pb.style.width = pct + '%';
+        pt.textContent = `Парсинг файла ${data.current} из ${data.total}: ${data.file}...`;
+      } else if (s === 'chunking') {
+        pb.style.width = '30%';
+        pt.textContent = `Создано ${data.chunks_created} чанков`;
+      } else if (s === 'embedding') {
+        const pct = 30 + (data.current / data.total) * 40;
+        pb.style.width = pct + '%';
+        pt.textContent = `Embedding: ${data.current}/${data.total}...`;
+      } else if (s === 'upserting') {
+        const pct = 70 + (data.current / data.total) * 30;
+        pb.style.width = pct + '%';
+        pt.textContent = `Загрузка в Qdrant: ${data.current}/${data.total}...`;
+      }
+    } else if (event === 'done') {
+      pb.style.width = '100%';
+      pt.textContent = 'Готово!';
+      showNotif('notif-kb', `Загружено: ${data.files_processed} файлов, ${data.chunks_created} чанков`, 'success');
+      selectedFiles = [];
+      renderFileList();
+      loadStats();
+    } else if (event === 'error') {
+      showNotif('notif-kb', data.message, 'error');
+    }
+  }
+
+  // ── Sample & Clear (Knowledge) ───────────
+
+  $('btn-sample-kb').addEventListener('click', async () => {
+    const btn = $('btn-sample-kb');
+    btn.disabled = true;
+    try {
+      const items = await API.getSample('knowledge_base');
+      renderSampleKB(items);
+    } catch (e) {
+      showNotif('notif-kb', 'Ошибка загрузки примеров: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+  });
+
+  function renderSampleKB(items) {
+    const c = $('sample-kb');
+    if (!items.length) { c.innerHTML = '<p style="color:var(--text-secondary);margin-top:12px;">Коллекция пуста</p>'; return; }
+    let html = '<div class="sample-grid">';
+    items.forEach(item => {
+      const p = item.payload || {};
+      html += `<div class="sample-card">
+        <span class="badge">${p.doc_type || '—'}</span>
+        <div class="meta">${p.source || '—'} &middot; ${p.section || '—'}</div>
+        <div class="preview">${item.text_preview || '—'}</div>
+      </div>`;
+    });
+    html += '</div>';
+    c.innerHTML = html;
+  }
+
+  $('btn-clear-kb').addEventListener('click', async () => {
+    if (!confirm('Вы уверены, что хотите очистить коллекцию "База знаний"? Все данные будут удалены.')) return;
+    const btn = $('btn-clear-kb');
+    btn.disabled = true;
+    try {
+      await API.clearCollection('knowledge_base');
+      showNotif('notif-kb', 'Коллекция очищена', 'success');
+      $('sample-kb').innerHTML = '';
+      loadStats();
+    } catch (e) {
+      showNotif('notif-kb', 'Ошибка очистки: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+  });
+
+  // ── Literature Table ─────────────────────
+
+  function addLitRow(data) {
+    const tbody = $('lit-tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" placeholder="Линейная алгебра" value="${data?.title || ''}"></td>
+      <td><input type="text" placeholder="Александров П.С." value="${data?.author || ''}"></td>
+      <td><select>${[1,2,3,4].map(n => `<option value="${n}" ${data?.course == n ? 'selected' : ''}>${n}</option>`).join('')}</select></td>
+      <td><input type="text" placeholder="Линейная алгебра" value="${data?.subject || ''}"></td>
+      <td><input type="text" placeholder="books/filename.pdf" value="${data?.file_key || ''}"></td>
+      <td><button class="row-remove">&times;</button></td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector('.row-remove').addEventListener('click', () => tr.remove());
+  }
+
+  addLitRow(); // start with one empty row
+
+  $('btn-add-row').addEventListener('click', () => addLitRow());
+
+  function collectTableBooks() {
+    const rows = $('lit-tbody').querySelectorAll('tr');
+    const books = [];
+    let valid = true;
+    rows.forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      const select = tr.querySelector('select');
+      const title = inputs[0].value.trim();
+      const author = inputs[1].value.trim();
+      const course = parseInt(select.value);
+      const subject = inputs[2].value.trim();
+      const file_key = inputs[3].value.trim();
+      if (!title || !author || !subject || !file_key) { valid = false; return; }
+      books.push({ title, author, course, subject, file_key });
+    });
+    return valid ? books : null;
+  }
+
+  $('btn-index-lit').addEventListener('click', async () => {
+    clearNotif('notif-lit');
+    const books = collectTableBooks();
+    if (!books) {
+      showNotif('notif-lit', 'Заполните все поля в таблице', 'error');
+      return;
+    }
+    if (!books.length) {
+      showNotif('notif-lit', 'Добавьте хотя бы одну книгу', 'error');
+      return;
+    }
+    const btn = $('btn-index-lit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Индексация...';
+    try {
+      const res = await API.uploadLiterature(books);
+      showNotif('notif-lit', `Проиндексировано книг: ${res.books_indexed}`, 'success');
+      loadStats();
+    } catch (e) {
+      showNotif('notif-lit', 'Ошибка: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Индексировать';
+  });
+
+  // ── Literature JSON ──────────────────────
+
+  $('btn-json-lit').addEventListener('click', async () => {
+    clearNotif('notif-lit');
+    const raw = $('json-input').value.trim();
+    if (!raw) { showNotif('notif-lit', 'Вставьте JSON', 'error'); return; }
+    let books;
+    try {
+      books = JSON.parse(raw);
+      if (!Array.isArray(books)) throw new Error('Ожидается массив');
+      books.forEach((b, i) => {
+        if (!b.title || !b.author || !b.course || !b.subject || !b.file_key) {
+          throw new Error(`Книга #${i + 1}: заполнены не все поля`);
+        }
+      });
+    } catch (e) {
+      showNotif('notif-lit', 'Некорректный JSON: ' + e.message, 'error');
+      return;
+    }
+    const btn = $('btn-json-lit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Загрузка...';
+    try {
+      const res = await API.uploadLiterature(books);
+      showNotif('notif-lit', `Проиндексировано книг: ${res.books_indexed}`, 'success');
+      $('json-input').value = '';
+      loadStats();
+    } catch (e) {
+      showNotif('notif-lit', 'Ошибка: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Загрузить JSON';
+  });
+
+  // ── Sample & Clear (Literature) ──────────
+
+  $('btn-sample-lit').addEventListener('click', async () => {
+    const btn = $('btn-sample-lit');
+    btn.disabled = true;
+    try {
+      const items = await API.getSample('literature');
+      renderSampleLit(items);
+    } catch (e) {
+      showNotif('notif-lit', 'Ошибка загрузки примеров: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+  });
+
+  function renderSampleLit(items) {
+    const c = $('sample-lit');
+    if (!items.length) { c.innerHTML = '<p style="color:var(--text-secondary);margin-top:12px;">Коллекция пуста</p>'; return; }
+    let html = '<div class="sample-grid">';
+    items.forEach(item => {
+      const p = item.payload || {};
+      html += `<div class="sample-card">
+        <span class="badge">Курс ${p.course || '?'}</span>
+        <div class="meta"><strong>${p.title || '—'}</strong></div>
+        <div class="meta">${p.author || '—'} &middot; ${p.subject || '—'}</div>
+        <div class="preview" style="font-size:0.75rem;color:var(--text-secondary)">${p.file_key || '—'}</div>
+      </div>`;
+    });
+    html += '</div>';
+    c.innerHTML = html;
+  }
+
+  $('btn-clear-lit').addEventListener('click', async () => {
+    if (!confirm('Вы уверены, что хотите очистить коллекцию "Литература"? Все данные будут удалены.')) return;
+    const btn = $('btn-clear-lit');
+    btn.disabled = true;
+    try {
+      await API.clearCollection('literature');
+      showNotif('notif-lit', 'Коллекция очищена', 'success');
+      $('sample-lit').innerHTML = '';
+      loadStats();
+    } catch (e) {
+      showNotif('notif-lit', 'Ошибка очистки: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+  });
+
+})();
+</script>
+</body>
+</html>

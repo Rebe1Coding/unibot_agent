@@ -1,0 +1,15 @@
+[project]
+name = "unibot-shared"
+version = "0.1.0"
+description = "Shared utilities for UniBot services"
+requires-python = ">=3.11"
+dependencies = [
+    "python-docx>=1.1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

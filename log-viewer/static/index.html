@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniBot — Container Log Viewer</title>
+  <link rel="icon" href="static/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="header">
+      <div class="header__title">
+        <button class="header__toggle" id="sidebar-toggle" aria-label="Контейнеры">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <span class="header__logo">●</span>
+        <h1>Container Log Viewer</h1>
+      </div>
+      <div class="header__status" id="status">
+        <span class="dot dot--idle"></span>
+        <span class="status__text">IDLE</span>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar" aria-label="Список контейнеров">
+      <div class="sidebar__controls">
+        <button class="btn btn--ghost" id="refresh-btn" title="Обновить список">↻ Обновить</button>
+        <label class="checkbox checkbox--all">
+          <input type="checkbox" id="select-all" />
+          <span>Выбрать всё</span>
+        </label>
+      </div>
+      <ul class="sidebar__list" id="container-list">
+        <li class="sidebar__placeholder">Загрузка...</li>
+      </ul>
+      <div class="sidebar__search">
+        <input type="search" id="log-search" placeholder="Поиск по логам..." aria-label="Поиск по логам" />
+      </div>
+    </aside>
+
+    <main class="logs">
+      <div class="logs__toolbar">
+        <div class="logs__toolbar-left">
+          <label>
+            История:
+            <input type="number" id="tail-input" min="0" max="10000" step="50" value="200" />
+          </label>
+          <button class="btn btn--primary" id="start-btn" disabled>▶ Подключить</button>
+          <button class="btn btn--ghost" id="stop-btn" disabled>■ Отключить</button>
+          <button class="btn btn--ghost" id="clear-btn">Очистить</button>
+        </div>
+        <div class="logs__toolbar-right">
+          <button class="btn btn--accent btn--hidden" id="resume-btn">↓ К последним</button>
+          <span class="counter" id="lines-counter">0 строк</span>
+        </div>
+      </div>
+
+      <div class="logs__viewport" id="viewport">
+        <div class="logs__placeholder" id="placeholder">
+          Выберите контейнеры для просмотра логов
+        </div>
+        <div class="logs__output" id="output" hidden></div>
+      </div>
+
+      <footer class="footer">
+        <div class="footer__legend">
+          <span class="legend"><i class="legend__dot legend__dot--stdout"></i> stdout</span>
+          <span class="legend"><i class="legend__dot legend__dot--stderr"></i> stderr</span>
+        </div>
+        <div class="footer__meta">
+          <span id="clock">--:--:--</span>
+          <span id="footer-state" class="state state--idle">● IDLE</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module" src="static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  # FastAPI agent
+  - job_name: "university-agent"
+    static_configs:
+      - targets: ["university-agent:8000"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+
+  # Redis exporter
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+
+  # PostgreSQL exporter
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  # Celery Flower (task queue metrics)
+  - job_name: "celery-flower"
+    static_configs:
+      - targets: ["flower:5555"]
+    metrics_path: "/metrics"
+    scrape_interval: 15s
+
+  # Indexer service
+  - job_name: "indexer"
+    static_configs:
+      - targets: ["indexer:8001"]
+    metrics_path: "/metrics"
+    scrape_interval: 15s
+
+  # Web GUI
+  - job_name: "web-gui"
+    static_configs:
+      - targets: ["web-gui:8002"]
+    metrics_path: "/metrics"
+    scrape_interval: 15s
+
+  # Container log viewer
+  - job_name: "log-viewer"
+    static_configs:
+      - targets: ["log-viewer:3002"]
+    metrics_path: "/metrics"
+    scrape_interval: 15s

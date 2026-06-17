@@ -1,0 +1,288 @@
+---
+# ════════════════════════════════════════════════════════════════
+# UniBot — Full Deployment Playbook
+# ════════════════════════════════════════════════════════════════
+#
+# Usage:
+#   # First time — full setup:
+#   ansible-playbook -i inventory.yml deploy.yml -e @vars.yml
+#
+#   # Only redeploy app (skip server setup):
+#   ansible-playbook -i inventory.yml deploy.yml -e @vars.yml --tags deploy
+#
+#   # Only update .env and restart:
+#   ansible-playbook -i inventory.yml deploy.yml -e @vars.yml --tags config
+#
+# ════════════════════════════════════════════════════════════════
+
+- name: Deploy UniBot
+  hosts: unibot
+  become: true
+  vars:
+    app_dir: "{{ app_dir | default('/opt/unibot') }}"
+    repo_url: "{{ repo_url | default('https://github.com/username/unibot.git') }}"
+    repo_branch: "{{ repo_branch | default('main') }}"
+    deploy_user: "{{ deploy_user | default('deploy') }}"
+
+  tasks:
+    # ══════════════════════════════════════════
+    # 1. Server Preparation
+    # ══════════════════════════════════════════
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: [setup]
+
+    - name: Install system dependencies
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - git
+          - ufw
+          - python3-pip
+          - python3-docker
+        state: present
+      tags: [setup]
+
+    # ══════════════════════════════════════════
+    # 2. Docker Installation
+    # ══════════════════════════════════════════
+
+    - name: Check if Docker is installed
+      ansible.builtin.command: docker --version
+      register: docker_check
+      ignore_errors: true
+      changed_when: false
+      tags: [setup, docker]
+
+    - name: Add Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+      when: docker_check.rc != 0
+      tags: [setup, docker]
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+      when: docker_check.rc != 0
+      tags: [setup, docker]
+
+    - name: Install Docker Engine
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+      when: docker_check.rc != 0
+      tags: [setup, docker]
+
+    - name: Start and enable Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+      tags: [setup, docker]
+
+    - name: Add deploy user to docker group
+      ansible.builtin.user:
+        name: "{{ deploy_user }}"
+        groups: docker
+        append: true
+      tags: [setup, docker]
+
+    # ══════════════════════════════════════════
+    # 3. Firewall
+    # ══════════════════════════════════════════
+
+    - name: Reset UFW to defaults
+      community.general.ufw:
+        state: reset
+      tags: [setup, firewall]
+
+    - name: Set UFW default deny incoming
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+      tags: [setup, firewall]
+
+    - name: Set UFW default allow outgoing
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+      tags: [setup, firewall]
+
+    - name: Allow configured ports through firewall
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.split('/')[0] }}"
+        proto: "{{ item.split('/')[1] | default('tcp') }}"
+      loop: "{{ open_ports }}"
+      tags: [setup, firewall]
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+      tags: [setup, firewall]
+
+    # ══════════════════════════════════════════
+    # 4. Clone / Pull Repository
+    # ══════════════════════════════════════════
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: "0755"
+      tags: [deploy]
+
+    - name: Clone or update repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repo_branch }}"
+        force: true
+      become_user: "{{ deploy_user }}"
+      tags: [deploy]
+
+    # ══════════════════════════════════════════
+    # 5. Configuration (.env)
+    # ══════════════════════════════════════════
+
+    - name: Generate .env from template
+      ansible.builtin.template:
+        src: templates/env.j2
+        dest: "{{ app_dir }}/.env"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: "0600"
+      tags: [deploy, config]
+
+    # ══════════════════════════════════════════
+    # 6. Build & Deploy
+    # ══════════════════════════════════════════
+
+    - name: Build Docker images
+      ansible.builtin.command:
+        cmd: docker compose build --parallel
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      changed_when: true
+      tags: [deploy]
+
+    - name: Start infrastructure services first
+      ansible.builtin.command:
+        cmd: docker compose up -d postgres redis qdrant minio
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      changed_when: true
+      tags: [deploy]
+
+    - name: Wait for infrastructure to be healthy
+      ansible.builtin.command:
+        cmd: docker compose ps --format json
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      register: compose_ps
+      retries: 30
+      delay: 5
+      until: "'unhealthy' not in compose_ps.stdout"
+      changed_when: false
+      tags: [deploy]
+
+    - name: Start all application services
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      changed_when: true
+      tags: [deploy]
+
+    - name: Wait for university-agent to be healthy
+      ansible.builtin.uri:
+        url: http://localhost:8000/health
+        return_content: true
+      register: health
+      retries: 30
+      delay: 10
+      until: health.status == 200
+      tags: [deploy]
+
+    # ══════════════════════════════════════════
+    # 7. Verify Deployment
+    # ══════════════════════════════════════════
+
+    - name: Check all containers are running
+      ansible.builtin.command:
+        cmd: docker compose ps --format "{{ '{{' }}.Name{{ '}}' }}\t{{ '{{' }}.Status{{ '}}' }}"
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      register: containers
+      changed_when: false
+      tags: [deploy, verify]
+
+    - name: Show container status
+      ansible.builtin.debug:
+        msg: "{{ containers.stdout_lines }}"
+      tags: [deploy, verify]
+
+    - name: Verify API gateway (nginx)
+      ansible.builtin.uri:
+        url: http://localhost:80/health
+        return_content: true
+      register: nginx_health
+      failed_when: nginx_health.status != 200
+      tags: [deploy, verify]
+
+    - name: Show health check result
+      ansible.builtin.debug:
+        msg: "API Gateway health: {{ nginx_health.json }}"
+      tags: [deploy, verify]
+
+    - name: Verify Grafana is accessible
+      ansible.builtin.uri:
+        url: http://localhost:3000/api/health
+      register: grafana_health
+      failed_when: grafana_health.status != 200
+      ignore_errors: true
+      tags: [deploy, verify]
+
+    - name: Deployment complete
+      ansible.builtin.debug:
+        msg: |
+          ══════════════════════════════════════════
+           UniBot deployed successfully!
+          ══════════════════════════════════════════
+           API Gateway:  http://{{ server_ip }}:80
+           Swagger UI:   http://{{ server_ip }}:80/docs
+           Indexer UI:   http://{{ server_ip }}:8001
+           Grafana:      http://{{ server_ip }}:3000
+           MinIO Console:http://{{ server_ip }}:9001
+           Qdrant UI:    http://{{ server_ip }}:6333/dashboard
+          ══════════════════════════════════════════
+      tags: [deploy, verify]
+
+  # ══════════════════════════════════════════
+  # Handlers
+  # ══════════════════════════════════════════
+
+  handlers:
+    - name: Restart docker compose
+      ansible.builtin.command:
+        cmd: docker compose restart
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"

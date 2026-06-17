@@ -1,0 +1,92 @@
+groups:
+  - name: unibot_alerts
+    rules:
+      # Agent process is down
+      - alert: AgentDown
+        expr: up{job="university-agent"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "University agent is down"
+          description: "The university-agent target has been unreachable for over 1 minute."
+
+      # p95 RAG latency exceeds 5 seconds
+      - alert: HighRAGLatency
+        expr: histogram_quantile(0.95, rate(unibot_chat_latency_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 chat latency is {{ $value | humanize }}s (threshold 5s)"
+          description: "The 95th percentile chat latency has exceeded 5 seconds for 5 minutes."
+
+      # Error rate above 1%
+      - alert: HighErrorRate
+        expr: >
+          rate(unibot_chat_requests_total{status="error"}[5m])
+          /
+          rate(unibot_chat_requests_total[5m])
+          > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Chat error rate is {{ $value | humanizePercentage }} (threshold 1%)"
+          description: "More than 1% of chat requests are failing over a 5-minute window."
+
+      # No chat requests for 30 minutes (possible silent failure)
+      - alert: NoChatTraffic
+        expr: rate(unibot_chat_requests_total[30m]) == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No chat requests received in 30 minutes"
+          description: "The agent has not received any chat requests — possible upstream or networking issue."
+
+      # Redis is down
+      - alert: RedisExporterDown
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis exporter is unreachable"
+
+      # PostgreSQL is down
+      - alert: PostgresExporterDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL exporter is unreachable"
+
+      # Celery / Worker alerts
+      - alert: CeleryWorkerDown
+        expr: flower_worker_online == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery worker offline"
+          description: "No active Celery workers for more than 2 minutes."
+
+      - alert: CeleryQueueBacklog
+        expr: flower_events_total{type="task-received"} - flower_events_total{type="task-succeeded"} > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Celery task queue backlog growing"
+          description: "More than 50 tasks pending for over 5 minutes."
+
+      - alert: CeleryTaskFailureRate
+        expr: rate(flower_events_total{type="task-failed"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Celery task failure rate"
+          description: "Task failure rate exceeds 0.1/sec for 5 minutes."

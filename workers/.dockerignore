@@ -1,0 +1,42 @@
+# Version control
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+
+# Virtual environments
+.venv
+venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation (не нужно в образе)
+*.md
+docs/
+LICENSE
+
+# Docker
+Dockerfile
+docker-compose*.yml
+
+# Claude Code
+.claude/
+CLAUDE.md

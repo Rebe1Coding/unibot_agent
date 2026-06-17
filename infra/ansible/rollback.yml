@@ -1,0 +1,69 @@
+---
+# ════════════════════════════════════════════════════════════════
+# UniBot — Rollback Playbook
+# ════════════════════════════════════════════════════════════════
+#
+# Usage:
+#   # Rollback to previous git commit:
+#   ansible-playbook -i inventory.yml rollback.yml -e @vars.yml
+#
+#   # Rollback to specific commit:
+#   ansible-playbook -i inventory.yml rollback.yml -e @vars.yml -e rollback_commit=abc1234
+#
+# ════════════════════════════════════════════════════════════════
+
+- name: Rollback UniBot
+  hosts: unibot
+  become: true
+  vars:
+    app_dir: "{{ app_dir | default('/opt/unibot') }}"
+    deploy_user: "{{ deploy_user | default('deploy') }}"
+    rollback_commit: "HEAD~1"
+
+  tasks:
+    - name: Get current commit before rollback
+      ansible.builtin.command:
+        cmd: git rev-parse --short HEAD
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      register: current_commit
+      changed_when: false
+
+    - name: Show current commit
+      ansible.builtin.debug:
+        msg: "Rolling back from {{ current_commit.stdout }} to {{ rollback_commit }}"
+
+    - name: Checkout rollback target
+      ansible.builtin.command:
+        cmd: "git checkout {{ rollback_commit }}"
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      changed_when: true
+
+    - name: Rebuild and restart services
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      changed_when: true
+
+    - name: Wait for agent to be healthy
+      ansible.builtin.uri:
+        url: http://localhost:8000/health
+        return_content: true
+      register: health
+      retries: 30
+      delay: 10
+      until: health.status == 200
+
+    - name: Get new commit
+      ansible.builtin.command:
+        cmd: git rev-parse --short HEAD
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      register: new_commit
+      changed_when: false
+
+    - name: Rollback complete
+      ansible.builtin.debug:
+        msg: "Rolled back from {{ current_commit.stdout }} to {{ new_commit.stdout }}. Health check passed."

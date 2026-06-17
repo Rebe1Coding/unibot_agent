@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Install ruff
+        run: uv tool install ruff
+      - name: Check formatting
+        run: ruff format --check university-agent/ indexer/ workers/ web-gui/
+      - name: Check linting
+        run: ruff check university-agent/ indexer/ workers/ web-gui/
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build university-agent
+        run: docker build -t unibot-agent -f university-agent/Dockerfile .
+      - name: Build indexer
+        run: docker build -t unibot-indexer ./indexer
+      - name: Build workers
+        run: docker build -t unibot-workers -f workers/Dockerfile .
+
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for secrets in code
+        run: |
+          # Простая проверка: нет ли захардкоженных секретов
+          ! grep -rn "sk-ant-\|sk-proj-\|AKIA" \
+            --include="*.py" --include="*.yml" --include="*.yaml" \
+            university-agent/ indexer/ workers/ web-gui/ || true
+      - name: Check .env not committed
+        run: |
+          # .env файлы не должны быть в git (кроме .env.example)
+          if git ls-files --error-unmatch .env 2>/dev/null; then
+            echo "ERROR: .env file is committed to git!"
+            exit 1
+          fi

@@ -1,0 +1,54 @@
+# ════════════════════════════════════════════
+# Server
+# ════════════════════════════════════════════
+server_ip: 123.45.67.89
+deploy_user: deploy
+ssh_key_path: ~/.ssh/id_ed25519
+app_dir: /opt/unibot
+repo_url: https://github.com/username/unibot.git
+repo_branch: main
+
+# ════════════════════════════════════════════
+# PostgreSQL
+# ════════════════════════════════════════════
+postgres_user: unibot
+postgres_password: "CHANGE_ME_strong_password_here"
+postgres_db: university
+
+# ════════════════════════════════════════════
+# MinIO
+# ════════════════════════════════════════════
+minio_root_user: minioadmin
+minio_root_password: "CHANGE_ME_minio_password"
+
+# ════════════════════════════════════════════
+# LLM (RouterAI) — только API-ключ
+# ════════════════════════════════════════════
+routerai_api_key: "sk-..."
+
+# ════════════════════════════════════════════
+# Web Search (optional)
+# ════════════════════════════════════════════
+serpapi_api_key: ""
+tavily_api_key: ""
+
+# ════════════════════════════════════════════
+# Indexer
+# ════════════════════════════════════════════
+indexer_admin_username: admin
+indexer_admin_password: "CHANGE_ME_indexer_password"
+
+# ════════════════════════════════════════════
+# Firewall — open ports
+# ════════════════════════════════════════════
+# 22   — SSH
+# 80   — Nginx (API Gateway)
+# 3000 — Grafana (optional, remove for production)
+# 8001 — Indexer UI (optional, remove for production)
+# 9001 — MinIO Console (optional, remove for production)
+open_ports:
+  - "22/tcp"
+  - "80/tcp"
+  - "3000/tcp"
+  - "8001/tcp"
+  - "9001/tcp"

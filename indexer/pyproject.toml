@@ -1,0 +1,34 @@
+[project]
+name = "university-indexer"
+version = "0.1.0"
+description = "Web UI for managing UniBot Qdrant knowledge base"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sentence-transformers>=3.3.0",
+    "torch>=2.5.0,<3.0",
+    "fastembed>=0.4.0",
+    "qdrant-client>=1.12.0",
+    "beautifulsoup4>=4.12.0",
+    "pymupdf>=1.25.0",
+    "pydantic-settings>=2.6.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.18",
+    "prometheus-client>=0.21.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[tool.hatch.build.targets.wheel]
+packages = ["indexer"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,96 @@
+# ── Python ────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+
+# ── Virtual environments ─────────────────────
+.venv/
+venv/
+env/
+
+# ── uv ───────────────────────────────────────
+# Lock files tracked, caches not
+.uv/
+.python-version
+
+# ── Environment / secrets ────────────────────
+.env
+**/.env
+*.env.local
+!.env.example
+!**/.env.example
+
+# ── Config (secrets) ─────────────────────────
+config.yaml
+**/config.yaml
+!config-example.yaml
+!**/config-example.yaml
+
+# ── IDE ──────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.claude/
+.crush/
+
+# ── OS ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Docker ───────────────────────────────────
+docker-compose.override.yml
+
+# ── ML models (large files) ──────────────────
+*.bin
+*.pt
+*.onnx
+sentence-transformers/
+
+# ── Logs ─────────────────────────────────────
+*.log
+logs/
+
+# ── Temp / generated ─────────────────────────
+*.tmp
+*.bak
+
+# ── Ansible ──────────────────────────────────
+infra/ansible/vars.yml
+*.retry
+
+# ── Prompts (temporary) ──────────────────────
+PROMPT_*.md
+CLAUDE.md
+
+
+# Рабочие файлы скрыты, в репозитории остаются только примеры *.example.md
+university-agent/app/agent/instructions/*.md
+!university-agent/app/agent/instructions/*.example.md
+
+# ── SSL certificates ────────────────────────
+infra/nginx/ssl/
+
+#cahe
+.cache/
+.ruff_cache/
+
+# ── DeepEval ──────────────────────────────────
+.deepeval/
+
+# ── Qdrant snapshots ─────────────────────────
+snapshots/*.snapshot
+
+# ── Eval outputs (только сырые данные) ───────
+tests/eval/output/raw_answers.json
+tests/eval/output/detailed_scores.json
+tests/eval/output/summary.json
+**/tests/eval/output/raw_answers.json
+**/tests/eval/output/detailed_scores.json
+**/tests/eval/output/summary.json
