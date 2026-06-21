@@ -159,8 +159,8 @@ class TestLLMFactory:
     """LLM provider instantiation."""
 
     def test_routerai_provider(self, monkeypatch):
-        monkeypatch.setenv("ROUTERAI_API_KEY", "sk-test")
-        monkeypatch.setenv("ROUTERAI_MODEL", "openai/gpt-4o")
+        monkeypatch.setattr("app.agent.react_agent.settings.routerai_api_key", "sk-test")
+        monkeypatch.setattr("app.agent.react_agent.settings.routerai_model", "openai/gpt-4o")
 
         from app.agent.react_agent import _build_llm
 
