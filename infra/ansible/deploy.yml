@@ -18,12 +18,18 @@
 - name: Deploy UniBot
   hosts: unibot
   become: true
+  # Значения по умолчанию. Любую из переменных можно переопределить через
+  # -e (extra-vars имеют более высокий приоритет, чем play-vars).
   vars:
-    app_dir: "{{ app_dir | default('/opt/unibot') }}"
-    repo_url: "{{ repo_url | default('https://github.com/username/unibot.git') }}"
-    repo_branch: "{{ repo_branch | default('main') }}"
-    deploy_user: "{{ deploy_user | default('deploy') }}"
-    open_ports: "{{ open_ports | default(['22/tcp', '80/tcp', '8001/tcp', '3000/tcp']) }}"
+    app_dir: /opt/unibot
+    repo_url: https://github.com/Rebe1Coding/unibot_agent.git
+    repo_branch: main
+    deploy_user: deploy
+    open_ports:
+      - "22/tcp"
+      - "80/tcp"
+      - "8001/tcp"
+      - "3000/tcp"
 
   tasks:
     # ══════════════════════════════════════════
