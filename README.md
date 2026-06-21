@@ -100,8 +100,6 @@ UniBot решает реальную проблему: сайт универси
      │
      ├─► search_knowledge_base  (Qdrant)
      ├─► search_literature      (Qdrant + MinIO)
-     ├─► get_teacher_info       (PostgreSQL)
-     ├─► get_schedule           (Qdrant)
      ├─► ask_clarification      (inline-кнопки)
      ├─► search_web             (Tavily / SerpAPI)
      └─► md_to_docx_convert     (python-docx + MinIO)
