@@ -57,6 +57,42 @@
         state: present
       tags: [setup]
 
+    # ── Swap (предохранитель от OOM при сборке образов) ──
+    - name: Create swap file
+      ansible.builtin.command:
+        cmd: fallocate -l 4G /swapfile
+        creates: /swapfile
+      tags: [setup]
+
+    - name: Set swap file permissions
+      ansible.builtin.file:
+        path: /swapfile
+        mode: "0600"
+      tags: [setup]
+
+    - name: Format swap file
+      ansible.builtin.command:
+        cmd: mkswap /swapfile
+      register: mkswap_result
+      changed_when: "'swapspace' in mkswap_result.stdout"
+      failed_when: mkswap_result.rc != 0 and 'already' not in mkswap_result.stderr
+      tags: [setup]
+
+    - name: Enable swap
+      ansible.builtin.command:
+        cmd: swapon /swapfile
+      register: swapon_result
+      changed_when: swapon_result.rc == 0
+      failed_when: swapon_result.rc != 0 and 'already' not in swapon_result.stderr
+      tags: [setup]
+
+    - name: Persist swap in fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "/swapfile none swap sw 0 0"
+        state: present
+      tags: [setup]
+
     # ══════════════════════════════════════════
     # 2. Docker Installation
     # ══════════════════════════════════════════
@@ -230,12 +266,17 @@
     # 6. Build & Deploy
     # ══════════════════════════════════════════
 
+    # Последовательная сборка (без --parallel): на 7-8 ГБ RAM параллельная
+    # сборка нескольких образов с torch/transformers упирается в память и
+    # роняет сервер по OOM. async+poll держит SSH-сессию живой на время сборки.
     - name: Build Docker images
       ansible.builtin.command:
-        cmd: docker compose build --parallel
+        cmd: docker compose build
         chdir: "{{ app_dir }}"
       become_user: "{{ deploy_user }}"
       changed_when: true
+      async: 2400
+      poll: 20
       tags: [deploy]
 
     - name: Start infrastructure services first
