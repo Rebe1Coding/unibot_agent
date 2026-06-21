@@ -1,0 +1,22 @@
+# UniBot Agent — конфигурация LLM-моделей через RouterAI
+# API-ключ задаётся в .env (ROUTERAI_API_KEY), остальное — здесь.
+
+routerai:
+  base_url: "https://routerai.ru/api/v1"
+  model: "deepseek/deepseek-v4-pro"
+  temperature: 0.6
+  max_tokens: 128000
+
+context_windows:
+  gpt-4o: 128000
+  gpt-4.1: 128000
+  gpt-4-turbo: 128000
+  gpt-4: 8192
+  gpt-3.5: 16385
+  o1: 128000
+  o3: 128000
+  o4: 128000
+  claude: 200000
+  gigachat: 32000
+  deepseek: 128000
+  gemini: 1048576

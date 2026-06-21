@@ -30,6 +30,8 @@ config.yaml
 **/config.yaml
 !config-example.yaml
 !**/config-example.yaml
+# Конфиг агента без секретов (ключ в .env) — нужен на сервере
+!university-agent/config.yaml
 
 # ── IDE ──────────────────────────────────────
 .vscode/
