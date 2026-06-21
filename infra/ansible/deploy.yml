@@ -27,6 +27,7 @@
     open_ports:
       - "22/tcp"
       - "80/tcp"
+      - "443/tcp"
       - "8001/tcp"
       - "3000/tcp"
 
@@ -289,6 +290,19 @@
           -out {{ app_dir }}/infra/nginx/ssl/fullchain.pem
           -subj "/CN={{ server_ip }}"
         creates: "{{ app_dir }}/infra/nginx/ssl/fullchain.pem"
+      tags: [deploy, config]
+
+    - name: Configure web-gui Google OAuth
+      ansible.builtin.replace:
+        path: "{{ app_dir }}/web-gui/.env"
+        regexp: "^{{ item.key }}=.*$"
+        replace: "{{ item.key }}={{ item.value }}"
+      loop:
+        - { key: "GOOGLE_CLIENT_ID", value: "{{ google_client_id | default('') }}" }
+        - { key: "GOOGLE_CLIENT_SECRET", value: "{{ google_client_secret | default('') }}" }
+        - { key: "GOOGLE_REDIRECT_URI", value: "{{ google_redirect_uri | default('https://unibotagents.duckdns.org/gui/auth/google/callback') }}" }
+      loop_control:
+        label: "{{ item.key }}"
       tags: [deploy, config]
 
     # ══════════════════════════════════════════
