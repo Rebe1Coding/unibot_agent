@@ -280,6 +280,17 @@
         mode: "0644"
       tags: [deploy, config]
 
+    # Самоподписанный сертификат для nginx (в git ключи не кладём).
+    - name: Generate self-signed TLS certificate for nginx
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -nodes -days 825 -newkey rsa:2048
+          -keyout {{ app_dir }}/infra/nginx/ssl/privkey.pem
+          -out {{ app_dir }}/infra/nginx/ssl/fullchain.pem
+          -subj "/CN={{ server_ip }}"
+        creates: "{{ app_dir }}/infra/nginx/ssl/fullchain.pem"
+      tags: [deploy, config]
+
     # ══════════════════════════════════════════
     # 6. Build & Deploy
     # ══════════════════════════════════════════
