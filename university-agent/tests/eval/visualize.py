@@ -37,6 +37,7 @@ def main():
 def _plot_category_bar(summary: dict):
     """Столбчатая диаграмма: средний балл по категориям."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -58,7 +59,7 @@ def _plot_category_bar(summary: dict):
     fig, ax = plt.subplots(figsize=(10, 6))
     bars = ax.bar(labels, means, color=colors, edgecolor="white", linewidth=1.2)
 
-    for bar, val in zip(bars, means):
+    for bar, val in zip(bars, means, strict=False):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.02,
@@ -83,6 +84,7 @@ def _plot_category_bar(summary: dict):
 def _plot_score_distribution(scores: list[dict]):
     """Box-plot распределения баллов по категориям."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -112,7 +114,7 @@ def _plot_score_distribution(scores: list[dict]):
     bp = ax.boxplot(data, labels=labels, patch_artist=True, showmeans=True)
 
     colors = ["#2ecc71", "#3498db", "#e74c3c", "#f39c12", "#9b59b6"]
-    for patch, color in zip(bp["boxes"], colors):
+    for patch, color in zip(bp["boxes"], colors, strict=False):
         patch.set_facecolor(color)
         patch.set_alpha(0.6)
 
@@ -133,6 +135,7 @@ def _plot_score_distribution(scores: list[dict]):
 def _plot_radar(summary: dict):
     """Радарная диаграмма по категориям."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
@@ -173,6 +176,7 @@ def _plot_radar(summary: dict):
 def _plot_per_question_heatmap(scores: list[dict]):
     """Тепловая карта: баллы по каждому вопросу."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
@@ -235,6 +239,7 @@ def _plot_per_question_heatmap(scores: list[dict]):
 def _plot_score_histogram(scores: list[dict]):
     """Гистограмма распределения всех баллов."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -247,7 +252,7 @@ def _plot_score_histogram(scores: list[dict]):
         color="#e74c3c",
         linestyle="--",
         linewidth=2,
-        label=f'Среднее ({sum(all_vals)/len(all_vals):.2f})',
+        label=f"Среднее ({sum(all_vals) / len(all_vals):.2f})",
     )
     ax.axvline(x=3.0, color="gray", linestyle=":", linewidth=1.5, label="Порог (3.0)")
     ax.set_xlabel("Балл (1–5)", fontsize=12)

@@ -28,6 +28,9 @@ class _FakeSession:
     def add_all(self, objs):
         self.added.extend(objs)
 
+    async def get(self, model, pk):
+        return None
+
     async def execute(self, stmt):
         self.executed.append(stmt)
         result = MagicMock()
@@ -64,7 +67,7 @@ class TestLoadHistory:
 
         from app.agent.memory import load_history
 
-        history = await load_history("user1")
+        history = await load_history("user1", "dlg1")
         assert history == []
         mock_redis.set.assert_awaited()  # PG result cached back to Redis
 
@@ -81,7 +84,7 @@ class TestLoadHistory:
 
         from app.agent.memory import load_history
 
-        history = await load_history("user1")
+        history = await load_history("user1", "dlg1")
         assert len(history) == 2
         assert history[0].type == "human"
         assert history[0].content == "Привет"
@@ -101,7 +104,7 @@ class TestLoadHistory:
 
         from app.agent.memory import load_history
 
-        history = await load_history("user1")
+        history = await load_history("user1", "dlg1")
         assert len(history) == 1
         assert history[0].content == "Вопрос"
 
@@ -119,7 +122,7 @@ class TestSaveTurn:
 
         from app.agent.memory import save_turn
 
-        await save_turn("user1", "Новое", "Ответ")
+        await save_turn("user1", "dlg1", "Новое", "Ответ")
 
         inserted = fake_pg.sessions[0].added
         assert len(inserted) == 2
@@ -128,15 +131,15 @@ class TestSaveTurn:
         mock_redis.set.assert_awaited()
 
 
-class TestClearHistory:
-    """Clearing the Redis cache and closing PostgreSQL history."""
+class TestDeleteDialog:
+    """Deleting a dialog from the Redis cache and PostgreSQL."""
 
     @pytest.mark.asyncio
-    async def test_clear_deletes_redis_and_closes_pg(self, mock_redis, fake_pg):
-        from app.agent.memory import clear_history
+    async def test_delete_clears_redis_and_pg(self, mock_redis, fake_pg):
+        from app.agent.memory import delete_dialog
 
-        await clear_history("user1")
+        await delete_dialog("user1", "dlg1")
 
         mock_redis.delete.assert_awaited()
-        assert fake_pg.sessions[0].executed  # UPDATE ... SET session_closed = true
+        assert fake_pg.sessions[0].executed  # DELETE ConversationHistory + Dialog
         assert fake_pg.sessions[0].committed

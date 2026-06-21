@@ -206,7 +206,7 @@ class TestInvokeRetry:
         from app.agent.react_agent import _invoke_with_retry
 
         executor = _FakeExecutor(failures=2)
-        result = await _invoke_with_retry(executor, "test", [], callbacks=[])
+        result = await _invoke_with_retry(executor, "test", [], "", callbacks=[])
         assert result["output"] == "success after retry"
 
 

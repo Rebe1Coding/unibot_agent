@@ -40,17 +40,13 @@ ALLOWED_EXTENSIONS = {".html", ".htm", ".pdf", ".md", ".txt"}
 
 
 def collect_files(root: Path) -> list[Path]:
-    return sorted(
-        p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in ALLOWED_EXTENSIONS
-    )
+    return sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in ALLOWED_EXTENSIONS)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Reindex a knowledge folder into Qdrant.")
     parser.add_argument("root", type=Path, help="Folder with knowledge files")
-    parser.add_argument(
-        "--clear", action="store_true", help="Drop and recreate the collection first"
-    )
+    parser.add_argument("--clear", action="store_true", help="Drop and recreate the collection first")
     args = parser.parse_args()
 
     root: Path = args.root
@@ -84,9 +80,7 @@ def main() -> int:
         except Exception:
             logger.exception("Failed to parse %s", path)
             continue
-        chunks = chunk_documents(
-            docs, chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap
-        )
+        chunks = chunk_documents(docs, chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap)
         all_chunks.extend(chunks)
         logger.info("%s -> %d chunks", path.name, len(chunks))
 
@@ -103,13 +97,9 @@ def main() -> int:
         texts = [c["text"] for c in batch]
         vectors = embed_documents(texts)
         sparse_vectors = embed_documents_sparse(texts)
-        ids = [
-            make_point_id(KNOWLEDGE_BASE, c["metadata"]["source"], c["metadata"]["chunk_index"])
-            for c in batch
-        ]
+        ids = [make_point_id(KNOWLEDGE_BASE, c["metadata"]["source"], c["metadata"]["chunk_index"]) for c in batch]
         payloads = [
-            {"text": c["text"], **{k: v for k, v in c["metadata"].items() if k != "chunk_index"}}
-            for c in batch
+            {"text": c["text"], **{k: v for k, v in c["metadata"].items() if k != "chunk_index"}} for c in batch
         ]
         upsert_batch(KNOWLEDGE_BASE, ids, vectors, payloads, sparse_vectors=sparse_vectors)
         upserted += len(batch)

@@ -14,7 +14,7 @@ from openai import OpenAI
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from parse_questions import CATEGORY_MAP, group_by_category, parse_all_questions
+from parse_questions import CATEGORY_MAP, parse_all_questions
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("eval-batch")
@@ -88,7 +88,7 @@ def evaluate_batch(questions_data: list[dict], category: str) -> list[dict]:
         answer = item["answer"][:2500] if item["answer"] else "[НЕТ ОТВЕТА]"
         expected = item["expected_criteria"][:1500]
         eval_items.append(
-            f"### Вопрос {i+1}\n"
+            f"### Вопрос {i + 1}\n"
             f"**Вопрос:** {item['question'][:500]}\n"
             f"**Ответ агента:** {answer}\n"
             f"**Ожидаемые критерии:** {expected}"
@@ -146,7 +146,6 @@ def main():
 
     questions = parse_all_questions()
     q_by_id = {q.id: q for q in questions}
-    cats = group_by_category(questions)
 
     # Группируем raw-ответы по категориям
     raw_by_cat: dict[str, list[dict]] = {}
@@ -236,13 +235,15 @@ def _print_summary(s: dict):
     logger.info("СВОДНЫЕ РЕЗУЛЬТАТЫ")
     logger.info("=" * 60)
     for cat, data in s["categories"].items():
-        logger.info("  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d",
-                    cat, data["mean"], data["min"], data["max"], data["count"])
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d", cat, data["mean"], data["min"], data["max"], data["count"]
+        )
     if s["overall"]:
         o = s["overall"]
         logger.info("-" * 60)
-        logger.info("  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d",
-                    "ОБЩИЙ ИТОГ", o["mean"], o["min"], o["max"], o["count"])
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d", "ОБЩИЙ ИТОГ", o["mean"], o["min"], o["max"], o["count"]
+        )
 
 
 if __name__ == "__main__":

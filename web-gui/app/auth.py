@@ -78,8 +78,13 @@ async def login() -> RedirectResponse:
     }
     response = RedirectResponse(f"{_GOOGLE_AUTH_URL}?{urlencode(params)}")
     response.set_cookie(
-        _STATE_COOKIE, state, max_age=600, httponly=True,
-        secure=settings.cookie_secure, samesite="lax", path="/",
+        _STATE_COOKIE,
+        state,
+        max_age=600,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite="lax",
+        path="/",
     )
     return response
 
@@ -107,9 +112,7 @@ async def callback(request: Request, code: str | None = None, state: str | None 
             raise HTTPException(status_code=502, detail="Не удалось получить токен Google")
         access_token = token_resp.json().get("access_token")
 
-        info_resp = await client.get(
-            _GOOGLE_USERINFO_URL, headers={"Authorization": f"Bearer {access_token}"}
-        )
+        info_resp = await client.get(_GOOGLE_USERINFO_URL, headers={"Authorization": f"Bearer {access_token}"})
         if info_resp.status_code != 200:
             raise HTTPException(status_code=502, detail="Не удалось получить профиль Google")
         info = info_resp.json()
@@ -130,8 +133,7 @@ async def me(request: Request) -> JSONResponse:
     if not user:
         return JSONResponse(status_code=401, content={"detail": "Не авторизован"})
     return JSONResponse(
-        {"user_id": user["sub"], "email": user.get("email"), "name": user.get("name"),
-         "picture": user.get("picture")}
+        {"user_id": user["sub"], "email": user.get("email"), "name": user.get("name"), "picture": user.get("picture")}
     )
 
 

@@ -89,6 +89,6 @@ jobs:
           ansible-playbook -i inventory.yml deploy.yml \
             -e "server_ip=${{ secrets.SERVER_IP }}" \
             -e "ssh_key_path=~/.ssh/deploy_key" \
+            -e "deploy_user=root" \
             -e "repo_url=${{ secrets.REPO_URL }}" \
-            -e "routerai_api_key=${{ secrets.ROUTERAI_API_KEY }}" \
-            --tags deploy
+            -e "routerai_api_key=${{ secrets.ROUTERAI_API_KEY }}"

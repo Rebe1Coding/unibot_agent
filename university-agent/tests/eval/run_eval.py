@@ -16,7 +16,6 @@ import httpx
 # Добавляем корень проекта в PYTHONPATH для доступа к .env
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from deepeval import evaluate
 from deepeval.metrics import GEval
 from deepeval.models import GPTModel
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
@@ -73,9 +72,7 @@ def get_judge_model() -> GPTModel:
 # ── Agent API Client ─────────────────────────────────────────────────────
 
 
-async def call_agent_api(
-    user_id: str, message: str, session: httpx.AsyncClient
-) -> dict[str, Any]:
+async def call_agent_api(user_id: str, message: str, session: httpx.AsyncClient) -> dict[str, Any]:
     """Отправить запрос агенту и получить ответ."""
     url = f"{API_BASE_URL}/api/chat"
     for attempt in range(MAX_RETRIES):
@@ -89,63 +86,58 @@ async def call_agent_api(
             return resp.json()
         except httpx.TimeoutException:
             if attempt < MAX_RETRIES - 1:
-                wait = 2 ** attempt
+                wait = 2**attempt
                 logger.warning("Timeout, retry in %ds...", wait)
                 await asyncio.sleep(wait)
             else:
                 raise
         except httpx.HTTPStatusError as e:
             if e.response.status_code >= 500 and attempt < MAX_RETRIES - 1:
-                wait = 2 ** attempt
+                wait = 2**attempt
                 logger.warning("HTTP %d, retry in %ds...", e.response.status_code, wait)
                 await asyncio.sleep(wait)
             else:
                 raise
 
 
-async def run_questions(
-    questions: list[TestQuestion], batch_size: int = 5
-) -> list[dict]:
+async def run_questions(questions: list[TestQuestion], batch_size: int = 5) -> list[dict]:
     """Прогнать все вопросы через агента с параллельными запросами."""
     results: list[dict] = []
     semaphore = asyncio.Semaphore(batch_size)
 
     async def process_one(q: TestQuestion) -> None:
-        async with semaphore:
-            async with httpx.AsyncClient() as session:
-                logger.info("[%d/%d] %s", q.id + 1, len(questions), q.question[:80])
-                try:
-                    api_resp = await call_agent_api(
-                        f"eval-{q.id:03d}", q.question, session
-                    )
-                    results.append(
-                        {
-                            "id": q.id,
-                            "question": q.question,
-                            "answer": api_resp.get("answer", ""),
-                            "sources": api_resp.get("sources", []),
-                            "clarification": api_resp.get("clarification"),
-                            "category": q.category,
-                            "subcategory": q.subcategory,
-                            "expected_criteria": q.expected_criteria,
-                            "error": None,
-                        }
-                    )
-                except Exception as e:
-                    logger.error("[%d] API error: %s", q.id + 1, e)
-                    results.append(
-                        {
-                            "id": q.id,
-                            "question": q.question,
-                            "answer": "",
-                            "sources": [],
-                            "clarification": None,
-                            "category": q.category,
-                            "subcategory": q.subcategory,
-                            "expected_criteria": q.expected_criteria,
-                            "error": str(e),
-                        }
-                    )
+        async with semaphore, httpx.AsyncClient() as session:
+            logger.info("[%d/%d] %s", q.id + 1, len(questions), q.question[:80])
+            try:
+                api_resp = await call_agent_api(f"eval-{q.id:03d}", q.question, session)
+                results.append(
+                    {
+                        "id": q.id,
+                        "question": q.question,
+                        "answer": api_resp.get("answer", ""),
+                        "sources": api_resp.get("sources", []),
+                        "clarification": api_resp.get("clarification"),
+                        "category": q.category,
+                        "subcategory": q.subcategory,
+                        "expected_criteria": q.expected_criteria,
+                        "error": None,
+                    }
+                )
+            except Exception as e:
+                logger.error("[%d] API error: %s", q.id + 1, e)
+                results.append(
+                    {
+                        "id": q.id,
+                        "question": q.question,
+                        "answer": "",
+                        "sources": [],
+                        "clarification": None,
+                        "category": q.category,
+                        "subcategory": q.subcategory,
+                        "expected_criteria": q.expected_criteria,
+                        "error": str(e),
+                    }
+                )
 
     tasks = [process_one(q) for q in questions]
     await asyncio.gather(*tasks)
@@ -375,9 +367,7 @@ async def main():
         metric = metric_by_category.get(cat_name)
 
         for q in cat_questions:
-            api_result = next(
-                (r for r in api_results_raw if r["id"] == q.id), None
-            )
+            api_result = next((r for r in api_results_raw if r["id"] == q.id), None)
             if not api_result:
                 logger.warning("  [%d] Нет ответа API", q.id + 1)
                 continue
@@ -443,9 +433,7 @@ async def main():
                     cat_score = metric.score
                     cat_reason = metric.reason
                 except Exception as e:
-                    logger.error(
-                        "  [%d] Ошибка категорийной метрики: %s", q.id + 1, e
-                    )
+                    logger.error("  [%d] Ошибка категорийной метрики: %s", q.id + 1, e)
                     cat_score = 0.0
                     cat_reason = f"Metric error: {e}"
             else:
@@ -465,9 +453,7 @@ async def main():
                     overall_score = overall_metric.score
                     overall_reason = overall_metric.reason
                 except Exception as e:
-                    logger.error(
-                        "  [%d] Ошибка общей метрики: %s", q.id + 1, e
-                    )
+                    logger.error("  [%d] Ошибка общей метрики: %s", q.id + 1, e)
                     overall_score = 0.0
                     overall_reason = f"Metric error: {e}"
             else:
@@ -527,9 +513,7 @@ async def main():
     return detailed_scores
 
 
-def _build_summary(
-    detailed_scores: list[dict], categories: dict[str, list]
-) -> dict:
+def _build_summary(detailed_scores: list[dict], categories: dict[str, list]) -> dict:
     """Собрать сводную статистику."""
     summary: dict[str, Any] = {"categories": {}, "overall": {}}
 
@@ -544,9 +528,7 @@ def _build_summary(
 
     for cat_name, cat_questions in categories.items():
         cat_ids = {q.id for q in cat_questions}
-        cat_scores = [
-            s["combo_score"] for s in detailed_scores if s["id"] in cat_ids
-        ]
+        cat_scores = [s["combo_score"] for s in detailed_scores if s["id"] in cat_ids]
         if cat_scores:
             summary["categories"][cat_name] = {
                 "mean": sum(cat_scores) / len(cat_scores),
@@ -567,9 +549,7 @@ def _print_summary(detailed_scores: list[dict], categories: dict[str, list]):
 
     for cat_name, cat_questions in categories.items():
         cat_ids = {q.id for q in cat_questions}
-        cat_scores = [
-            s["combo_score"] for s in detailed_scores if s["id"] in cat_ids
-        ]
+        cat_scores = [s["combo_score"] for s in detailed_scores if s["id"] in cat_ids]
         if cat_scores:
             avg = sum(cat_scores) / len(cat_scores)
             logger.info(

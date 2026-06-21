@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -102,8 +101,6 @@ _settings = Settings(
 )
 
 # Публичный доступ к context_windows из YAML
-CONTEXT_WINDOWS: dict[str, int] = {
-    str(k): int(v) for k, v in _YAML.get("context_windows", {}).items()
-}
+CONTEXT_WINDOWS: dict[str, int] = {str(k): int(v) for k, v in _YAML.get("context_windows", {}).items()}
 
 settings = _settings

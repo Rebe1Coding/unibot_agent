@@ -96,3 +96,5 @@ tests/eval/output/summary.json
 **/tests/eval/output/summary.json
 # ── Личная инструкция по деплою (не в гит) ──
 docs/deploy-simple.md
+# ── Пароли/доступы сервисов (НЕ в гит) ──
+docs/credentials.md

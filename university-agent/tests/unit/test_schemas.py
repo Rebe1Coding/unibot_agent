@@ -12,7 +12,7 @@ class TestChatRequest:
     def test_valid_minimal(self):
         from app.models.schemas import ChatRequest
 
-        req = ChatRequest(user_id="user_001", message="Привет!")
+        req = ChatRequest(user_id="user_001", dialog_id="dlg_001", message="Привет!")
         assert req.user_id == "user_001"
         assert req.message == "Привет!"
         assert req.clarification_response is None
@@ -20,7 +20,12 @@ class TestChatRequest:
     def test_valid_with_clarification(self):
         from app.models.schemas import ChatRequest
 
-        req = ChatRequest(user_id="user99", message="расписание", clarification_response="1 курс")
+        req = ChatRequest(
+            user_id="user99",
+            dialog_id="dlg99",
+            message="расписание",
+            clarification_response="1 курс",
+        )
         assert req.clarification_response == "1 курс"
 
     def test_user_id_too_short(self):

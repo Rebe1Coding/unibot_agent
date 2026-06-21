@@ -82,12 +82,8 @@ async def save_turn(user_id: str, dialog_id: str, user_message: str, assistant_m
     async with factory() as session:
         session.add_all(
             [
-                ConversationHistory(
-                    user_id=user_id, dialog_id=dialog_id, role="user", content=user_message
-                ),
-                ConversationHistory(
-                    user_id=user_id, dialog_id=dialog_id, role="assistant", content=assistant_message
-                ),
+                ConversationHistory(user_id=user_id, dialog_id=dialog_id, role="user", content=user_message),
+                ConversationHistory(user_id=user_id, dialog_id=dialog_id, role="assistant", content=assistant_message),
             ]
         )
         dialog = await session.get(Dialog, dialog_id)
@@ -169,7 +165,5 @@ async def delete_dialog(user_id: str, dialog_id: str) -> None:
                 ConversationHistory.dialog_id == dialog_id,
             )
         )
-        await session.execute(
-            delete(Dialog).where(Dialog.id == dialog_id, Dialog.user_id == user_id)
-        )
+        await session.execute(delete(Dialog).where(Dialog.id == dialog_id, Dialog.user_id == user_id))
         await session.commit()

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 TEST_DIR = Path(__file__).resolve().parent.parent.parent.parent / "tests" / "llm-judge"
@@ -65,9 +65,7 @@ def _parse_file(filepath: Path, start_id: int) -> list[TestQuestion]:
     blocks = [b.strip() for b in blocks if b.strip()]
 
     for i, block in enumerate(blocks):
-        parts = re.split(
-            r"\n\*\*Ожидаемый ответ / Критерии оценки:\*\*", block, maxsplit=1
-        )
+        parts = re.split(r"\n\*\*Ожидаемый ответ / Критерии оценки:\*\*", block, maxsplit=1)
         if len(parts) < 2:
             continue
 
@@ -80,9 +78,7 @@ def _parse_file(filepath: Path, start_id: int) -> list[TestQuestion]:
 
         # Всё после Категория: до следующей строки с ** — это вопрос
         # Упрощённо: убираем строку с **Категория:**, остальное — вопрос
-        question_text = re.sub(
-            r"\*\*Категория:\*\*\s*.+?$", "", header_body, flags=re.MULTILINE
-        ).strip()
+        question_text = re.sub(r"\*\*Категория:\*\*\s*.+?$", "", header_body, flags=re.MULTILINE).strip()
         question_text = re.sub(r"\n\*\*Вопрос:\*\*\s*", "", question_text)
 
         question_text = _clean_question_text(question_text)

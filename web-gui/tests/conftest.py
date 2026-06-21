@@ -15,9 +15,8 @@ def configure_api_key(monkeypatch):
 @pytest.fixture
 async def client():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        async with app.router.lifespan_context(app):
-            yield ac
+    async with AsyncClient(transport=transport, base_url="http://test") as ac, app.router.lifespan_context(app):
+        yield ac
 
 
 @pytest.fixture

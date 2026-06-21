@@ -75,10 +75,7 @@ def _build_filter(filters: dict[str, Any] | None) -> models.Filter | None:
     if not filters:
         return None
     return models.Filter(
-        must=[
-            models.FieldCondition(key=k, match=models.MatchValue(value=v))
-            for k, v in filters.items()
-        ]
+        must=[models.FieldCondition(key=k, match=models.MatchValue(value=v)) for k, v in filters.items()]
     )
 
 

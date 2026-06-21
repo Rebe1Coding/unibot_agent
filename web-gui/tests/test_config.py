@@ -1,17 +1,23 @@
 import importlib
 
 import pytest
+from pydantic import ValidationError
 
 
 def _reload_settings():
     from app import config as cfg
+
     importlib.reload(cfg)
     return cfg.settings
 
 
 def test_defaults(monkeypatch):
     for key in [
-        "WEB_GUI_HOST", "WEB_GUI_PORT", "API_BASE_URL", "API_KEY", "LOG_LEVEL",
+        "WEB_GUI_HOST",
+        "WEB_GUI_PORT",
+        "API_BASE_URL",
+        "API_KEY",
+        "LOG_LEVEL",
     ]:
         monkeypatch.delenv(key, raising=False)
     s = _reload_settings()
@@ -38,5 +44,5 @@ def test_env_overrides(monkeypatch):
 
 def test_port_must_be_int(monkeypatch):
     monkeypatch.setenv("WEB_GUI_PORT", "not-a-number")
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         _reload_settings()

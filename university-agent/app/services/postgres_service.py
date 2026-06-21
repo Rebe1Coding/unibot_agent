@@ -57,12 +57,9 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # create_all не меняет существующие таблицы — добавляем dialog_id вручную
+        await conn.execute(text("ALTER TABLE conversation_history ADD COLUMN IF NOT EXISTS dialog_id VARCHAR(36)"))
         await conn.execute(
-            text("ALTER TABLE conversation_history ADD COLUMN IF NOT EXISTS dialog_id VARCHAR(36)")
-        )
-        await conn.execute(
-            text("CREATE INDEX IF NOT EXISTS ix_conversation_history_dialog_id "
-                 "ON conversation_history (dialog_id)")
+            text("CREATE INDEX IF NOT EXISTS ix_conversation_history_dialog_id ON conversation_history (dialog_id)")
         )
     logger.info("Database tables ensured via create_all() + migrations")
 

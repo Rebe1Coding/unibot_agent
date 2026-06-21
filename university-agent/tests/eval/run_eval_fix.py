@@ -14,7 +14,7 @@ from openai import OpenAI
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from parse_questions import CATEGORY_MAP, group_by_category, parse_all_questions
+from parse_questions import group_by_category, parse_all_questions
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("eval-fix")
@@ -76,7 +76,7 @@ def evaluate_batch(items: list[dict], category: str) -> list[dict]:
             answer = item["answer"][:2000] if item["answer"] else "[НЕТ ОТВЕТА]"
             expected = item["expected_criteria"][:1000]
             eval_items.append(
-                f"### Вопрос {j+1}\n"
+                f"### Вопрос {j + 1}\n"
                 f"**Вопрос:** {item['question'][:400]}\n"
                 f"**Ответ:** {answer}\n"
                 f"**Критерии:** {expected}"
@@ -194,9 +194,7 @@ def main():
                 "category": cat_name,
                 "subcategory": q.subcategory if q else "",
                 "question": (q.question if q else "")[:300],
-                "answer": next(
-                    (it["answer"][:500] for it in raw if it["id"] == r["id"]), ""
-                ),
+                "answer": next((it["answer"][:500] for it in raw if it["id"] == r["id"]), ""),
                 "score": r["score"],
                 "reason": r["reason"],
             }
@@ -220,9 +218,7 @@ def main():
                 }
             )
         if batch_data:
-            results = evaluate_batch(
-                batch_data, "Релевантный (RAG)"
-            )
+            results = evaluate_batch(batch_data, "Релевантный (RAG)")
             for r in results:
                 q = q_by_id.get(r["id"])
                 existing[r["id"]] = {
@@ -275,13 +271,15 @@ def main():
     logger.info("ФИНАЛЬНЫЕ РЕЗУЛЬТАТЫ")
     logger.info("=" * 60)
     for cat, data in summary["categories"].items():
-        logger.info("  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d",
-                    cat, data["mean"], data["min"], data["max"], data["count"])
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d", cat, data["mean"], data["min"], data["max"], data["count"]
+        )
     if summary["overall"]:
         o = summary["overall"]
         logger.info("-" * 60)
-        logger.info("  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d",
-                    "ОБЩИЙ ИТОГ", o["mean"], o["min"], o["max"], o["count"])
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d", "ОБЩИЙ ИТОГ", o["mean"], o["min"], o["max"], o["count"]
+        )
 
 
 if __name__ == "__main__":

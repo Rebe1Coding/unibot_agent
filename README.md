@@ -33,7 +33,7 @@ UniBot решает реальную проблему: сайт универси
 | Логика ответа | Фиксированный pipeline | Multi-step reasoning (ReAct) |
 | Работа с файлами | Нет | Whisper -> Word, PDF |
 | Контекст диалога | Нет / ограничен | Redis + sliding window + summary |
-| Инструменты | Нет | 7 специализированных tools |
+| Инструменты | Нет | 6 специализированных tools |
 | Уточнения | Нет | Adaptive clarification strategy |
 
 ---
@@ -69,15 +69,15 @@ UniBot решает реальную проблему: сайт универси
                                       │
                     ┌─────────────────▼──────────────────────────┐
                     │        FastAPI + ReAct Agent (:8000)       │
-                    │  LangChain · 7 tools · semantic cache     │
-                    └──┬──────┬──────┬──────┬──────┬──────┬─────┘
-                       │      │      │      │      │      │
-              ┌────────┘  ┌───┘  ┌───┘  ┌───┘  ┌───┘  ┌──┘
+                    │  LangChain · 6 tools · semantic cache     │
+                    └──┬──────┬──────┬──────┬──────┬─────┘
+                       │      │      │      │      │
+              ┌────────┘  ┌───┘  ┌───┘  ┌───┘  ┌──┘
               ▼           ▼      ▼      ▼      ▼      ▼
-         ┌─────────┐ ┌──────┐ ┌──────┐ ┌─────┐ ┌─────┐ ┌──────┐
-         │Qdrant   │ │Redis │ │Postgr│ │MinIO│ │Kafka│ │Celery│
-         │Vector DB│ │Cache │ │SQL   │ │  S3 │ │Event│ │Worker│
-         └─────────┘ └──────┘ └──────┘ └─────┘ └─────┘ └──────┘
+         ┌─────────┐ ┌──────┐ ┌──────┐ ┌─────┐ ┌──────┐
+         │Qdrant   │ │Redis │ │Postgr│ │MinIO│ │Celery│
+         │Vector DB│ │Cache │ │SQL   │ │  S3 │ │Worker│
+         └─────────┘ └──────┘ └──────┘ └─────┘ └──────┘
 ```
 
 ### ReAct Loop (Reasoning + Acting)
@@ -132,7 +132,6 @@ UniBot решает реальную проблему: сайт универси
 | **RDBMS** | PostgreSQL | Пользователи, преподаватели |
 | **Cache** | Redis | Сессии, семантический кеш |
 | **Storage** | MinIO (S3) | Аудио, Word-файлы, книги |
-| **Broker** | Kafka | Event streaming, аналитика |
 | **Queue** | Celery + Redis | Асинхронные задачи |
 | **Frontend** | Web GUI (FastAPI + Vanilla JS) | Веб-интерфейс |
 | **Gateway** | Nginx | Reverse proxy, rate limiting |
@@ -154,8 +153,8 @@ unibot/
 │   │   │   ├── react_agent.py
 │   │   │   ├── prompts.py
 │   │   │   └── memory.py
-│   │   ├── tools/           # 7 инструментов агента
-│   │   ├── services/        # Redis, Qdrant, PostgreSQL, MinIO, Kafka
+│   │   ├── tools/           # 6 инструментов агента
+│   │   ├── services/        # Redis, Qdrant, PostgreSQL, MinIO
 │   │   └── models/          # ORM + Pydantic schemas
 │   ├── Dockerfile
 │   └── pyproject.toml

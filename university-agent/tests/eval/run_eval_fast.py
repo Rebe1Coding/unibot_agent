@@ -15,8 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from deepeval.metrics import GEval
 from deepeval.models import GPTModel
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-
-from parse_questions import CATEGORY_MAP, group_by_category, parse_all_questions
+from parse_questions import group_by_category, parse_all_questions
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("eval-fast")
@@ -222,14 +221,25 @@ def _print_summary(detailed: list[dict], cats: dict):
         cat_scores = [d["score"] for d in detailed if d["id"] in cat_ids]
         if cat_scores:
             avg = sum(cat_scores) / len(cat_scores)
-            logger.info("  %-30s: avg=%.2f  min=%.2f  max=%.2f  n=%d",
-                        cat_name, avg, min(cat_scores), max(cat_scores), len(cat_scores))
+            logger.info(
+                "  %-30s: avg=%.2f  min=%.2f  max=%.2f  n=%d",
+                cat_name,
+                avg,
+                min(cat_scores),
+                max(cat_scores),
+                len(cat_scores),
+            )
     all_scores = [d["score"] for d in detailed]
     if all_scores:
         logger.info("-" * 60)
-        logger.info("  %-30s: avg=%.2f  min=%.2f  max=%.2f  n=%d",
-                    "ОБЩИЙ ИТОГ", sum(all_scores)/len(all_scores),
-                    min(all_scores), max(all_scores), len(all_scores))
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.2f  max=%.2f  n=%d",
+            "ОБЩИЙ ИТОГ",
+            sum(all_scores) / len(all_scores),
+            min(all_scores),
+            max(all_scores),
+            len(all_scores),
+        )
 
 
 if __name__ == "__main__":

@@ -82,7 +82,7 @@ def eval_one(item: dict) -> dict:
 
     prompt = f"""{criteria}
 
-Вопрос пользователя: {item['question'][:600]}
+Вопрос пользователя: {item["question"][:600]}
 
 Ответ ассистента: {answer}
 
@@ -117,7 +117,7 @@ def eval_one(item: dict) -> dict:
             time.sleep(1)
         except Exception as e:
             logger.error("[%d] Error (attempt %d): %s", qid + 1, attempt + 1, e)
-            time.sleep(2 ** attempt)
+            time.sleep(2**attempt)
 
     return {"id": qid, "score": 0, "reason": "PARSE_ERROR"}
 
@@ -165,8 +165,11 @@ def main():
                 completed += 1
                 logger.info(
                     "[%d/%d] cat=%s score=%.0f %s",
-                    completed, total, item["category"],
-                    r["score"], r["reason"][:60],
+                    completed,
+                    total,
+                    item["category"],
+                    r["score"],
+                    r["reason"][:60],
                 )
             except Exception as e:
                 logger.error("[%d] Future error: %s", item["id"] + 1, e)
@@ -226,13 +229,15 @@ def main():
     logger.info("ФИНАЛЬНЫЕ РЕЗУЛЬТАТЫ")
     logger.info("=" * 60)
     for cat, data in summary["categories"].items():
-        logger.info("  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d",
-                    cat, data["mean"], data["min"], data["max"], data["count"])
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d", cat, data["mean"], data["min"], data["max"], data["count"]
+        )
     if summary["overall"]:
         o = summary["overall"]
         logger.info("-" * 60)
-        logger.info("  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d",
-                    "ОБЩИЙ ИТОГ", o["mean"], o["min"], o["max"], o["count"])
+        logger.info(
+            "  %-30s: avg=%.2f  min=%.0f  max=%.0f  n=%d", "ОБЩИЙ ИТОГ", o["mean"], o["min"], o["max"], o["count"]
+        )
     logger.info("Готово: %s", scores_path)
 
 

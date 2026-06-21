@@ -353,9 +353,7 @@ async def voice_status(task_id: str):
             if result.get("status") == "error":
                 return VoiceStatusResponse(status="error", error=result.get("message", "error"))
             text = result.get("transcript") or result.get("text") or ""
-            return VoiceStatusResponse(
-                status="completed", text=text, download_url=result.get("download_url")
-            )
+            return VoiceStatusResponse(status="completed", text=text, download_url=result.get("download_url"))
         return VoiceStatusResponse(status="completed", text=str(result))
 
     return VoiceStatusResponse(status="processing")
@@ -375,9 +373,7 @@ async def list_dialogs(user_id: str):
     from app.agent import memory
 
     dialogs = await memory.list_dialogs(user_id)
-    return DialogListResponse(
-        user_id=user_id, dialogs=[DialogInfo(**d) for d in dialogs]
-    )
+    return DialogListResponse(user_id=user_id, dialogs=[DialogInfo(**d) for d in dialogs])
 
 
 @app.post("/api/dialogs/{user_id}", response_model=DialogInfo)

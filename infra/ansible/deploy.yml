@@ -23,6 +23,7 @@
     repo_url: "{{ repo_url | default('https://github.com/username/unibot.git') }}"
     repo_branch: "{{ repo_branch | default('main') }}"
     deploy_user: "{{ deploy_user | default('deploy') }}"
+    open_ports: "{{ open_ports | default(['22/tcp', '80/tcp', '8001/tcp', '3000/tcp']) }}"
 
   tasks:
     # ══════════════════════════════════════════

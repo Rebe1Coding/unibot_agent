@@ -18,13 +18,16 @@ class TestAppStartup:
 
     def test_routes_registered(self, app):
         """All expected routes are registered."""
-        routes = {route.path: route.methods for route in app.routes if hasattr(route, "methods")}
+        routes: dict[str, set[str]] = {}
+        for route in app.routes:
+            if hasattr(route, "methods"):
+                routes.setdefault(route.path, set()).update(route.methods)
         assert "/api/chat" in routes
         assert "POST" in routes["/api/chat"]
         assert "/api/voice" in routes
         assert "POST" in routes["/api/voice"]
-        assert "/api/history/{user_id}" in routes
-        assert "GET" in routes["/api/history/{user_id}"]
+        assert "/api/dialogs/{user_id}" in routes
+        assert "GET" in routes["/api/dialogs/{user_id}"]
         assert "/health" in routes
         assert "/metrics" in routes
 

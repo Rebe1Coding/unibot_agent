@@ -90,9 +90,7 @@ def _save_docx(minio_client: Minio, user_id: str, markdown_text: str) -> str:
         length=len(docx_bytes),
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-    return minio_client.presigned_get_object(
-        settings.minio_bucket, object_name, expires=timedelta(hours=24)
-    )
+    return minio_client.presigned_get_object(settings.minio_bucket, object_name, expires=timedelta(hours=24))
 
 
 @app.task(name="app.worker.transcribe_audio", bind=True, max_retries=2)
