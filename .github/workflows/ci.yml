@@ -92,4 +92,6 @@ jobs:
             -e "deploy_user=root" \
             -e "repo_url=${{ secrets.REPO_URL }}" \
             -e "routerai_api_key=${{ secrets.ROUTERAI_API_KEY }}" \
+            -e "google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -e "google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             --tags deploy
