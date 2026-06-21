@@ -18,8 +18,7 @@
 - name: Deploy UniBot
   hosts: unibot
   become: true
-  # Значения по умолчанию. Любую из переменных можно переопределить через
-  # -e (extra-vars имеют более высокий приоритет, чем play-vars).
+  # Дефолты; переопределяются через -e.
   vars:
     app_dir: /opt/unibot
     repo_url: https://github.com/Rebe1Coding/unibot_agent.git
@@ -57,33 +56,36 @@
         state: present
       tags: [setup]
 
-    # ── Swap (предохранитель от OOM при сборке образов) ──
+    - name: Check if swap is already active
+      ansible.builtin.command: swapon --show=NAME --noheadings
+      register: active_swaps
+      changed_when: false
+      tags: [setup]
+
     - name: Create swap file
       ansible.builtin.command:
         cmd: fallocate -l 4G /swapfile
         creates: /swapfile
+      when: "'/swapfile' not in active_swaps.stdout"
       tags: [setup]
 
     - name: Set swap file permissions
       ansible.builtin.file:
         path: /swapfile
         mode: "0600"
+      when: "'/swapfile' not in active_swaps.stdout"
       tags: [setup]
 
     - name: Format swap file
       ansible.builtin.command:
         cmd: mkswap /swapfile
-      register: mkswap_result
-      changed_when: "'swapspace' in mkswap_result.stdout"
-      failed_when: mkswap_result.rc != 0 and 'already' not in mkswap_result.stderr
+      when: "'/swapfile' not in active_swaps.stdout"
       tags: [setup]
 
     - name: Enable swap
       ansible.builtin.command:
         cmd: swapon /swapfile
-      register: swapon_result
-      changed_when: swapon_result.rc == 0
-      failed_when: swapon_result.rc != 0 and 'already' not in swapon_result.stderr
+      when: "'/swapfile' not in active_swaps.stdout"
       tags: [setup]
 
     - name: Persist swap in fstab
@@ -266,9 +268,7 @@
     # 6. Build & Deploy
     # ══════════════════════════════════════════
 
-    # Последовательная сборка (без --parallel): на 7-8 ГБ RAM параллельная
-    # сборка нескольких образов с torch/transformers упирается в память и
-    # роняет сервер по OOM. async+poll держит SSH-сессию живой на время сборки.
+    # Последовательная сборка (без --parallel) — ниже пик RAM, без OOM.
     - name: Build Docker images
       ansible.builtin.command:
         cmd: docker compose build
@@ -299,8 +299,7 @@
       changed_when: false
       tags: [deploy]
 
-    # Скачиваем образы отдельным шагом с ретраями: pull с Docker Hub часто
-    # срывается по таймауту/лимиту анонимных пуллов — повтор обычно лечит.
+    # Pull отдельным шагом с ретраями — Docker Hub часто срывается по лимиту.
     - name: Pull service images (with retries)
       ansible.builtin.command:
         cmd: "docker compose pull --quiet {{ compose_services | default('') }}"
