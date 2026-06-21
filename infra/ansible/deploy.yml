@@ -61,6 +61,14 @@
       changed_when: false
       tags: [setup, docker]
 
+    - name: Ensure apt keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+      when: docker_check.rc != 0
+      tags: [setup, docker]
+
     - name: Add Docker GPG key
       ansible.builtin.get_url:
         url: https://download.docker.com/linux/ubuntu/gpg
@@ -160,16 +168,55 @@
       tags: [deploy]
 
     # ══════════════════════════════════════════
-    # 5. Configuration (.env)
+    # 5. Configuration (per-service .env)
     # ══════════════════════════════════════════
+    # docker-compose reads a SEPARATE .env per service, not one root file.
+    # The committed *.env.example files already carry correct values and the
+    # default passwords that docker-compose.yml hard-codes — so we copy them
+    # as-is and only inject the user-specific secrets below.
 
-    - name: Generate .env from template
-      ansible.builtin.template:
-        src: templates/env.j2
-        dest: "{{ app_dir }}/.env"
+    - name: Create per-service .env from committed examples
+      ansible.builtin.copy:
+        src: "{{ app_dir }}/{{ item }}/.env.example"
+        dest: "{{ app_dir }}/{{ item }}/.env"
+        remote_src: true
         owner: "{{ deploy_user }}"
         group: "{{ deploy_user }}"
         mode: "0600"
+        force: true
+      loop:
+        - university-agent
+        - workers
+        - indexer
+        - web-gui
+        - log-viewer
+      tags: [deploy, config]
+
+    - name: Inject RouterAI API key into agent and workers .env
+      ansible.builtin.replace:
+        path: "{{ app_dir }}/{{ item }}/.env"
+        regexp: '^ROUTERAI_API_KEY=.*$'
+        replace: "ROUTERAI_API_KEY={{ routerai_api_key }}"
+      loop:
+        - university-agent
+        - workers
+      tags: [deploy, config]
+
+    - name: Inject web-search API keys into agent .env (optional)
+      ansible.builtin.replace:
+        path: "{{ app_dir }}/university-agent/.env"
+        regexp: "^{{ item.key }}=.*$"
+        replace: "{{ item.key }}={{ item.value }}"
+      loop:
+        - { key: "TAVILY_API_KEY", value: "{{ tavily_api_key | default('') }}" }
+        - { key: "SERPAPI_API_KEY", value: "{{ serpapi_api_key | default('') }}" }
+      tags: [deploy, config]
+
+    - name: Set indexer admin password
+      ansible.builtin.replace:
+        path: "{{ app_dir }}/indexer/.env"
+        regexp: '^ADMIN_PASSWORD=.*$'
+        replace: "ADMIN_PASSWORD={{ indexer_admin_password | default('change-me-indexer-password') }}"
       tags: [deploy, config]
 
     # ══════════════════════════════════════════
@@ -204,9 +251,12 @@
       changed_when: false
       tags: [deploy]
 
-    - name: Start all application services
+    # Start the full stack (incl. monitoring) by default.
+    # To run a lighter set, put a space-separated service list in
+    # `compose_services` in vars.yml (e.g. to drop prometheus/grafana).
+    - name: Start application services
       ansible.builtin.command:
-        cmd: docker compose up -d
+        cmd: "docker compose up -d {{ compose_services | default('') }}"
         chdir: "{{ app_dir }}"
       become_user: "{{ deploy_user }}"
       changed_when: true

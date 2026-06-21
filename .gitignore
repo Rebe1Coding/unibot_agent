@@ -94,3 +94,5 @@ tests/eval/output/summary.json
 **/tests/eval/output/raw_answers.json
 **/tests/eval/output/detailed_scores.json
 **/tests/eval/output/summary.json
+# ── Личная инструкция по деплою (не в гит) ──
+docs/deploy-simple.md

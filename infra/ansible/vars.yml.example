@@ -1,54 +1,52 @@
 # ════════════════════════════════════════════
-# Server
+# ОБЯЗАТЕЛЬНО ЗАПОЛНИТЬ (4 строки)
 # ════════════════════════════════════════════
-server_ip: 123.45.67.89
+server_ip: 123.45.67.89                                   # IP арендованного сервера
+repo_url: https://github.com/username/unibot.git          # реальный адрес репозитория (для приватного — с токеном)
+routerai_api_key: "sk-..."                                # ключ к LLM, без него агент не отвечает
+
+# ════════════════════════════════════════════
+# Доступ по SSH
+# ════════════════════════════════════════════
 deploy_user: deploy
 ssh_key_path: ~/.ssh/id_ed25519
 app_dir: /opt/unibot
-repo_url: https://github.com/username/unibot.git
 repo_branch: main
 
 # ════════════════════════════════════════════
-# PostgreSQL
+# Пароли БД/хранилищ.
+# ВНИМАНИЕ: docker-compose.yml жёстко прописывает значения "change-me-*".
+# Чтобы приложение и контейнеры совпали, эти пароли НЕ меняем для разовой демонстрации.
+# (Порты баз наружу закрыты — это безопасно для показа.)
 # ════════════════════════════════════════════
 postgres_user: unibot
-postgres_password: "CHANGE_ME_strong_password_here"
+postgres_password: "change-me-postgres-password"
 postgres_db: university
-
-# ════════════════════════════════════════════
-# MinIO
-# ════════════════════════════════════════════
 minio_root_user: minioadmin
-minio_root_password: "CHANGE_ME_minio_password"
+minio_root_password: "change-me-minio-password"
+indexer_admin_password: "change-me-indexer-password"     # вход в Indexer UI (загрузка базы знаний)
 
 # ════════════════════════════════════════════
-# LLM (RouterAI) — только API-ключ
-# ════════════════════════════════════════════
-routerai_api_key: "sk-..."
-
-# ════════════════════════════════════════════
-# Web Search (optional)
+# Веб-поиск (необязательно, можно оставить пустым)
 # ════════════════════════════════════════════
 serpapi_api_key: ""
 tavily_api_key: ""
 
 # ════════════════════════════════════════════
-# Indexer
+# Какие сервисы поднимать. Пусто/не задано = весь стек (с мониторингом).
+# Чтобы убрать мониторинг и сэкономить память — перечисли нужные сервисы:
+# compose_services: "postgres redis qdrant minio university-agent celery-worker indexer web-gui log-viewer nginx"
 # ════════════════════════════════════════════
-indexer_admin_username: admin
-indexer_admin_password: "CHANGE_ME_indexer_password"
 
 # ════════════════════════════════════════════
-# Firewall — open ports
+# Открытые порты фаервола
+#   22 — SSH, 80 — сайт (QR ведёт сюда), 8001 — Indexer UI (загрузка базы знаний)
+#   3000 — Grafana (графики метрик для комиссии)
+#   443 — раскомментируй, если перейдёшь на HTTPS (сертификат самоподписанный)
 # ════════════════════════════════════════════
-# 22   — SSH
-# 80   — Nginx (API Gateway)
-# 3000 — Grafana (optional, remove for production)
-# 8001 — Indexer UI (optional, remove for production)
-# 9001 — MinIO Console (optional, remove for production)
 open_ports:
   - "22/tcp"
   - "80/tcp"
-  - "3000/tcp"
   - "8001/tcp"
-  - "9001/tcp"
+  - "3000/tcp"
+  # - "443/tcp"

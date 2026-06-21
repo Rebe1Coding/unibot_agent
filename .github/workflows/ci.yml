@@ -50,3 +50,45 @@ jobs:
             echo "ERROR: .env file is committed to git!"
             exit 1
           fi
+
+  # ── Обязательный шаг автотестов: быстрые unit + smoke, без инфраструктуры ──
+  test:
+    name: Tests (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: university-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Install dependencies
+        run: uv sync
+      - name: Run unit and smoke tests
+        run: uv run pytest tests/unit tests/smoke -q
+
+  # ── Выкат на сервер: только из main и только если всё зелёное ──
+  deploy:
+    name: Deploy (Ansible)
+    runs-on: ubuntu-latest
+    needs: [lint, docker-build, security, test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ansible
+        run: pipx install --include-deps ansible
+      - name: Add SSH private key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+      - name: Run deploy playbook
+        working-directory: infra/ansible
+        run: |
+          ansible-galaxy collection install community.general
+          ansible-playbook -i inventory.yml deploy.yml \
+            -e "server_ip=${{ secrets.SERVER_IP }}" \
+            -e "ssh_key_path=~/.ssh/deploy_key" \
+            -e "repo_url=${{ secrets.REPO_URL }}" \
+            -e "routerai_api_key=${{ secrets.ROUTERAI_API_KEY }}" \
+            --tags deploy
