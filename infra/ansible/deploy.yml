@@ -299,6 +299,20 @@
       changed_when: false
       tags: [deploy]
 
+    # Скачиваем образы отдельным шагом с ретраями: pull с Docker Hub часто
+    # срывается по таймауту/лимиту анонимных пуллов — повтор обычно лечит.
+    - name: Pull service images (with retries)
+      ansible.builtin.command:
+        cmd: "docker compose pull --quiet {{ compose_services | default('') }}"
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      register: compose_pull
+      retries: 5
+      delay: 20
+      until: compose_pull.rc == 0
+      changed_when: true
+      tags: [deploy]
+
     # Start the full stack (incl. monitoring) by default.
     # To run a lighter set, put a space-separated service list in
     # `compose_services` in vars.yml (e.g. to drop prometheus/grafana).
@@ -307,6 +321,10 @@
         cmd: "docker compose up -d {{ compose_services | default('') }}"
         chdir: "{{ app_dir }}"
       become_user: "{{ deploy_user }}"
+      register: compose_up
+      retries: 3
+      delay: 15
+      until: compose_up.rc == 0
       changed_when: true
       tags: [deploy]
 
