@@ -289,13 +289,13 @@
 
     - name: Wait for infrastructure to be healthy
       ansible.builtin.command:
-        cmd: docker compose ps --format json
+        cmd: docker compose ps postgres redis qdrant minio --format json
         chdir: "{{ app_dir }}"
       become_user: "{{ deploy_user }}"
       register: compose_ps
       retries: 30
       delay: 5
-      until: "'unhealthy' not in compose_ps.stdout"
+      until: "'unhealthy' not in compose_ps.stdout and 'starting' not in compose_ps.stdout"
       changed_when: false
       tags: [deploy]
 

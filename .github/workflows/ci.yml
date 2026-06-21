@@ -91,4 +91,5 @@ jobs:
             -e "ssh_key_path=~/.ssh/deploy_key" \
             -e "deploy_user=root" \
             -e "repo_url=${{ secrets.REPO_URL }}" \
-            -e "routerai_api_key=${{ secrets.ROUTERAI_API_KEY }}"
+            -e "routerai_api_key=${{ secrets.ROUTERAI_API_KEY }}" \
+            --tags deploy
