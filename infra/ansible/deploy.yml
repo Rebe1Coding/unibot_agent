@@ -264,6 +264,22 @@
         replace: "ADMIN_PASSWORD={{ indexer_admin_password | default('change-me-indexer-password') }}"
       tags: [deploy, config]
 
+    # log-viewer читает docker.sock — GID группы docker на хосте плавает.
+    - name: Detect host docker group GID
+      ansible.builtin.command: getent group docker
+      register: docker_group
+      changed_when: false
+      tags: [deploy, config]
+
+    - name: Write DOCKER_GID to project .env for compose
+      ansible.builtin.copy:
+        dest: "{{ app_dir }}/.env"
+        content: "DOCKER_GID={{ docker_group.stdout.split(':')[2] }}\n"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: "0644"
+      tags: [deploy, config]
+
     # ══════════════════════════════════════════
     # 6. Build & Deploy
     # ══════════════════════════════════════════
