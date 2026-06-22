@@ -378,6 +378,16 @@
       until: health.status == 200
       tags: [deploy]
 
+    # nginx кэширует IP апстримов со старта; после пересоздания контейнеров
+    # перезапускаем, иначе ловим 502 на проксируемых сервисах.
+    - name: Restart nginx to refresh upstream IPs
+      ansible.builtin.command:
+        cmd: docker compose restart nginx
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      changed_when: true
+      tags: [deploy]
+
     # ══════════════════════════════════════════
     # 7. Verify Deployment
     # ══════════════════════════════════════════
