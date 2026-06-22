@@ -108,7 +108,7 @@ services:
   indexer:
     build: ./indexer
     ports:
-      - "127.0.0.1:8001:8001"
+      - "8001:8001"
     depends_on:
       qdrant:
         condition: service_healthy
@@ -202,7 +202,7 @@ services:
   grafana:
     image: grafana/grafana:11.1.0
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=change-me-grafana-password
