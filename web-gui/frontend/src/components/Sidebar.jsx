@@ -1,7 +1,9 @@
 /** Left panel: logo, dialog list, new chat, and the signed-in user with logout. */
-export default function Sidebar({ dialogs, activeId, onNewChat, onSelect, onDelete, user, onLogout }) {
+export default function Sidebar({ dialogs, activeId, onNewChat, onSelect, onDelete, user, onLogout, open, onClose }) {
   return (
-    <aside className="sidebar" aria-label="Боковая панель">
+    <>
+      <div className={`sidebar__backdrop${open ? ' sidebar__backdrop--show' : ''}`} onClick={onClose} aria-hidden="true" />
+      <aside className={`sidebar${open ? ' sidebar--open' : ''}`} aria-label="Боковая панель">
       <div className="sidebar__header">
         <span className="sidebar__logo" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none"
@@ -12,6 +14,7 @@ export default function Sidebar({ dialogs, activeId, onNewChat, onSelect, onDele
           </svg>
         </span>
         <span className="sidebar__title">UniBot</span>
+        <button type="button" className="sidebar__close" aria-label="Закрыть меню" onClick={onClose}>✕</button>
       </div>
 
       <button className="sidebar__new-chat" onClick={onNewChat}>
@@ -53,6 +56,7 @@ export default function Sidebar({ dialogs, activeId, onNewChat, onSelect, onDele
           Выйти
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

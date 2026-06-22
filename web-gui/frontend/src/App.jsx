@@ -24,6 +24,7 @@ export default function App() {
 
   const [attachments, setAttachments] = useState([]);
   const [recording, setRecording] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { user, loading: authLoading, authenticated, login, logout } = useAuth(api);
   useHealth(api, setBanner);
@@ -42,6 +43,11 @@ export default function App() {
     if (name === '/new') newChat();
     else if (name === '/status') checkLectureStatus();
   }, [newChat, checkLectureStatus]);
+
+  // На мобильных панель — выезжающая; после выбора/создания диалога закрываем её.
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const handleNewChat = useCallback(() => { newChat(); closeSidebar(); }, [newChat, closeSidebar]);
+  const handleSelectDialog = useCallback((id) => { selectDialog(id); closeSidebar(); }, [selectDialog, closeSidebar]);
 
   const handleFiles = useCallback((fileList) => {
     const audio = [];
@@ -107,14 +113,16 @@ export default function App() {
       <Sidebar
         dialogs={dialogs}
         activeId={activeId}
-        onNewChat={newChat}
-        onSelect={selectDialog}
+        onNewChat={handleNewChat}
+        onSelect={handleSelectDialog}
         onDelete={removeDialog}
         user={user}
         onLogout={logout}
+        open={sidebarOpen}
+        onClose={closeSidebar}
       />
       <main className="chat">
-        <Header banner={banner} />
+        <Header banner={banner} onMenu={() => setSidebarOpen(true)} />
         <MessageList
           messages={messages}
           typing={typing}
