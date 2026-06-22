@@ -108,7 +108,7 @@ services:
   indexer:
     build: ./indexer
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     depends_on:
       qdrant:
         condition: service_healthy
@@ -186,7 +186,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./infra/monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
@@ -202,7 +202,7 @@ services:
   grafana:
     image: grafana/grafana:11.1.0
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=change-me-grafana-password
@@ -221,7 +221,7 @@ services:
       - REDIS_ADDR=redis://redis:6379
       - REDIS_PASSWORD=change-me-redis-password
     ports:
-      - "9121:9121"
+      - "127.0.0.1:9121:9121"
     depends_on:
       redis:
         condition: service_healthy
@@ -232,7 +232,7 @@ services:
     environment:
       - DATA_SOURCE_NAME=postgresql://unibot:change-me-postgres-password@postgres:5432/university?sslmode=disable
     ports:
-      - "9187:9187"
+      - "127.0.0.1:9187:9187"
     depends_on:
       postgres:
         condition: service_healthy
