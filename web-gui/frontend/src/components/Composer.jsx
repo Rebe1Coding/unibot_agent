@@ -27,7 +27,18 @@ export default function Composer({
   const [text, setText] = useState('');
   const [menuIndex, setMenuIndex] = useState(0);
   const [menuDismissed, setMenuDismissed] = useState(false);
+  const [compact, setCompact] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches,
+  );
   const fileInputRef = useRef(null);
+
+  // На узких экранах плейсхолдер короче, чтобы не переносился на две строки.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 720px)');
+    const sync = () => setCompact(mq.matches);
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -186,7 +197,7 @@ export default function Composer({
           className="composer__input"
           rows={1}
           maxLength={MAX_LEN}
-          placeholder="Напишите сообщение..."
+          placeholder={compact ? 'Сообщение…' : 'Напишите сообщение…'}
           aria-label="Сообщение"
           disabled={!enabled}
           value={text}

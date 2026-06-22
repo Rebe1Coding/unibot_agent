@@ -491,6 +491,14 @@ body {
 .welcome__text { max-width: 680px; color: var(--c-text-dim); }
 .welcome__prompt { color: var(--c-accent); font-weight: 700; }
 
+/* строка с печатающимся кодом: одна строка, без переносов и скачков высоты */
+.welcome__demo {
+  min-height: 1.6em;
+  color: var(--c-accent-soft);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 /* ── Typing / cursor ─────────────────────────────── */
 .typing { display: flex; align-items: center; gap: 8px; }
 .typing__prompt { font-size: 11.5px; color: var(--c-accent); opacity: 0.85; }
