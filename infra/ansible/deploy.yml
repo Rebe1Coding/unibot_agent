@@ -256,6 +256,19 @@
         - { key: "SERPAPI_API_KEY", value: "{{ serpapi_api_key | default('') }}" }
       tags: [deploy, config]
 
+    # Presigned-ссылки на файлы (литература, голосовые заметки) подписываются
+    # этим хостом — он должен совпадать с тем, что бьёт пользователь через nginx,
+    # иначе SigV4 не сойдётся и ссылка вернёт 403/не откроется в браузере.
+    - name: Configure MinIO public endpoint for presigned URLs in agent .env
+      ansible.builtin.replace:
+        path: "{{ app_dir }}/university-agent/.env"
+        regexp: "^{{ item.key }}=.*$"
+        replace: "{{ item.key }}={{ item.value }}"
+      loop:
+        - { key: "MINIO_PUBLIC_ENDPOINT", value: "unibotagents.duckdns.org" }
+        - { key: "MINIO_PUBLIC_SECURE", value: "true" }
+      tags: [deploy, config]
+
     - name: Set indexer admin password
       ansible.builtin.replace:
         path: "{{ app_dir }}/indexer/.env"
@@ -287,6 +300,7 @@
           -keyout {{ app_dir }}/infra/nginx/ssl/privkey.pem
           -out {{ app_dir }}/infra/nginx/ssl/fullchain.pem
           -subj "/CN={{ server_ip }}"
+          -addext "subjectAltName=IP:{{ server_ip }}"
         creates: "{{ app_dir }}/infra/nginx/ssl/fullchain.pem"
       tags: [deploy, config]
 
